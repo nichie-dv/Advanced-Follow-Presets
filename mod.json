@@ -1,0 +1,42 @@
+{
+	"geode": "5.1.0",
+	"gd": {
+		"win": "2.2081",
+		"android": "2.2081",
+		"mac": "2.2081",
+		"ios": "2.2081"
+	},
+	"id": "nichie.advanced-follow-presets",
+	"name": "Advanced Follow Presets",
+	"version": "v1.0.0",
+	"developer": "nichie",
+	"description": "",
+	"settings": {
+		"filepaths": {
+			"type": "title",
+            "name": "Filepath Settings"
+		},
+		"presets-path": {
+			"type": "folder",
+			"name": "Presets",
+			"description": "Folder path for presets.",
+    		"default": "{mod_save_dir}/presets"
+		},	
+		"template-path": {
+			"type": "folder",
+			"name": "Templates",
+			"description": "Folder path for template presets.",
+    		"default": "{mod_save_dir}/templates"
+		},
+		"extra": {
+			"type": "title",
+            "name": "Extra Settings"
+		},
+		"wokemode": {
+			"type": "bool",
+			"name": "Wokemode",
+			"description": "Enables the transgender flag button",
+			"default": false
+		}
+	}
+}
