@@ -10,6 +10,10 @@
 	"name": "Advanced Follow Presets",
 	"version": "v0.1.0",
 	"developer": "nichie",
+	"links": {
+		"homepage": "https://nichie.dev",
+		"source": "https://github.com/nichie-dv/Advanced-Follow-Presets"
+	},
 	"description": "Overhauls the advanced follow premade settings",
 	"settings": {
 		"filepaths": {

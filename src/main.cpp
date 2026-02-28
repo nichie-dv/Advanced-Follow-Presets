@@ -975,7 +975,7 @@ bool createPresetPopup::init() {
 
     auto popupBase = NineSlice::create("GJ_square01.png");
     popupBase->setID("popup-base");
-    popupBase->setContentSize({475, 260});
+    popupBase->setContentSize({380, 260});
     popupBase->setScale(0);
 
     auto ppScaleIn = CCScaleTo::create(0.5f, 1);
