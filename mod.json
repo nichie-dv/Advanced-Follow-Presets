@@ -8,13 +8,16 @@
 	},
 	"id": "nichie.advanced-follow-presets",
 	"name": "Advanced Follow Presets",
-	"version": "v0.1.1",
+	"version": "v0.1.2",
 	"developer": "nichie",
 	"links": {
 		"homepage": "https://nichie.dev",
 		"source": "https://github.com/nichie-dv/Advanced-Follow-Presets"
 	},
 	"description": "Overhauls the advanced follow premade settings",
+	"dependencies": {
+		"geode.node-ids": ">=1.21.1"
+	},
 	"settings": {
 		"filepaths": {
 			"type": "title",
