@@ -329,14 +329,19 @@ inline std::string createTemplates() {
 };
 
 
-
+struct LoadedPreset {
+    AdvancedFollowPreset preset;
+    int tag;
+    std::filesystem::path filePath;
+};
 
 
 
 
 
 struct PresetsOptions {
-    std::vector<std::pair<AdvancedFollowPreset, int>>* loadedPresets; //preset, tag
+    std::vector<LoadedPreset>* loadedPresets; //preset, tag
+    SetupAdvFollowPopup* trigger;
 };
 
 

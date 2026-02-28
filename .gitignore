@@ -62,3 +62,7 @@ build-*/
 # CLion
 .idea/
 /cmake-build-*/
+
+*.py
+advFollowTrigger.json
+.gitignore
