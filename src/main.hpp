@@ -192,6 +192,7 @@ matjson::Value presetToJson(const AdvancedFollowPreset& preset) {
     matjson::Value obj;
     obj["highlightColor"] = preset.tabColor;
     obj["name"] = preset.name;
+    obj["description"] = preset.description;
 
     for (auto& map : memberMappings) {
         if (map.intMember) 
@@ -213,6 +214,7 @@ AdvancedFollowPreset presetFromJson(const matjson::Value& obj) {
     AdvancedFollowPreset preset{}; 
     preset.tabColor = static_cast<int>(obj["highlightColor"].asInt().unwrap());
     preset.name = static_cast<std::string>(obj["name"].asString().unwrap());
+    preset.description = static_cast<std::string>(obj["description"].asString().unwrap());
 
     for (auto& map : memberMappings) {
         if (obj[map.name].isNull()) continue;
@@ -297,8 +299,6 @@ inline std::string createTemplates() {
         file.close();
     }
     
-
-
     matjson::Value jsonBall = presetToJson(robtopHomingBall);
     {
         auto path = geode::Mod::get()->getSettingValue<std::filesystem::path>("template-path") / "robtopHomingBall.json";
@@ -307,11 +307,6 @@ inline std::string createTemplates() {
         file.close();
     }
     
-
-    
-
-
-
     matjson::Value jsonTemp = presetToJson(templatePreset);
     {
         auto path = geode::Mod::get()->getSettingValue<std::filesystem::path>("template-path") / "templatePreset.json";
@@ -320,12 +315,7 @@ inline std::string createTemplates() {
         file.close();
     }
     
-    
-
-    
     return geode::Mod::get()->getSaveDir().string() + "/templates";
-
-
 };
 
 
@@ -335,17 +325,10 @@ struct LoadedPreset {
     std::filesystem::path filePath;
 };
 
-
-
-
-
 struct PresetsOptions {
-    std::vector<LoadedPreset>* loadedPresets; //preset, tag
+    std::vector<LoadedPreset>* loadedPresets; 
     SetupAdvFollowPopup* trigger;
 };
-
-
-
 
 
 class createPresetPopup : public cocos2d::CCLayer {
@@ -365,7 +348,5 @@ class createPresetPopup : public cocos2d::CCLayer {
    
     void registerWithTouchDispatcher() override;
     ~createPresetPopup();
-
-
 
 };

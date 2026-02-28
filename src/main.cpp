@@ -46,10 +46,6 @@ $on_mod(Loaded) {
 #include <Geode/modify/SetupAdvFollowPopup.hpp>
 class $modify(MySetupAdvFollowPopup, SetupAdvFollowPopup) {
 
-    
-
-
-
     std::pair<std::vector<int>, std::vector<float>> unwrapPreset(AdvancedFollowPreset& preset) {
         std::vector<int> presetIDs;
         std::vector<float> presetValues;
@@ -109,7 +105,6 @@ class $modify(MySetupAdvFollowPopup, SetupAdvFollowPopup) {
 
         return preset;
     }
-
     
 
     bool init(AdvancedFollowTriggerObject* object, CCArray* objects) {
@@ -206,7 +201,8 @@ enum SelectionMode  {
 class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     struct Fields {
         createPresetPopup* m_popup = nullptr;
-
+        TextInput* m_nameInput = nullptr;
+        TextInput* m_descInput = nullptr;
 
         //bear with me
         ScrollLayer* m_mainScrollLayer = nullptr;
@@ -351,8 +347,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             m_fields->m_ScrollingButtonMenu->addChild(button);
 
         }
-
-
         
 
         float buttonWidth = 45;
@@ -380,11 +374,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
         
         m_fields->m_popupContentLayer->addChildAtPosition(m_fields->m_mainScrollLayer, Anchor::Center, ccp(0, 7));
-
-
-        
-
-
         
     }
 
@@ -405,10 +394,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         } else {
             Options->loadedPresets = new std::vector<LoadedPreset>();
         }
-
-
-        
-        
 
 
 
@@ -626,23 +611,42 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
     void onFinalizePreset(CCObject* sender) {
         m_fields->m_popup->removeFromParentAndCleanup(true);
-        SetupAdvFollowPopup* trigger = Options->trigger;
         
-        
+        auto name = m_fields->m_nameInput->getString();
 
+        auto it = std::find_if(
+            Options->loadedPresets->begin(),
+            Options->loadedPresets->end(),
+            [name](const LoadedPreset& p) {
+                return p.preset.name == name;
+            }
+        );
 
-        AdvancedFollowPreset preset = MySetupAdvFollowPopup::wrapPreset();
-        preset.name = m_fields->m_presetName;
-        preset.tabColor = m_fields->m_itemSpriteSelection;
-        
-        matjson::Value jsonTemp = presetToJson(preset);
-        {
-            auto path = geode::Mod::get()->getSettingValue<std::filesystem::path>("presets-path") / (fmt::to_string(preset.name) + ".json");
-            std::ofstream file(path);
-            file << jsonTemp.dump(4);
-            file.close();
+        if (it != Options->loadedPresets->end()) {
+            log::warn("Preset exists: {}", name);
         }
-        reloadPresets();
+        else {
+            if (name.length() > 0) {
+                
+                AdvancedFollowPreset preset = MySetupAdvFollowPopup::wrapPreset();
+                preset.name = name;
+                preset.description = m_fields->m_descInput->getString();
+                preset.tabColor = m_fields->m_itemSpriteSelection;
+                
+                matjson::Value jsonTemp = presetToJson(preset);
+                {
+                    auto path = geode::Mod::get()->getSettingValue<std::filesystem::path>("presets-path") / (fmt::to_string(preset.name) + ".json");
+                    std::ofstream file(path);
+                    file << jsonTemp.dump(4);
+                    file.close();
+                }
+                reloadPresets();
+            }
+        }
+
+        
+
+        
     }
 
 
@@ -720,7 +724,19 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             iconMenu->addChild(item);
         }
         
+        auto nameInput = TextInput::create(250, "Enter a short name", "bigFont.fnt");
+        nameInput->setLabel("Name");
+        nameInput->setID("name-input");
+        m_fields->m_nameInput = nameInput;
 
+        auto descInput = TextInput::create(300, "Enter a brief description", "bigFont.fnt");
+        descInput->setLabel("Description");
+        nameInput->setID("description-input");
+        m_fields->m_descInput = descInput;
+        
+
+        menu->addChildAtPosition(nameInput, Anchor::Top, ccp(0, -60));
+        menu->addChildAtPosition(descInput, Anchor::Center, ccp(0, 13));
 
         menu->addChildAtPosition(iconMenuBG, Anchor::Bottom, ccp(0, 55));
         menu->addChildAtPosition(iconMenuLabel, Anchor::Center, ccp(0, -30));
@@ -889,7 +905,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
        
         
-        float maxWidth = 35.0f;
+        float maxWidth = 33.5f;
         btnLabel->setWidth(maxWidth);  
         btnLabel->setAlignment(kCCTextAlignmentCenter);
 
@@ -919,10 +935,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         button->setTag(tag);
         button->setID(fmt::format("custom-entry-{}-{}"_spr, preset.name, tag));
        
-
-
-
-
         return button;
 
     }
@@ -930,11 +942,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     void onSelectPreset(CCObject* sender) {
         SelectPremadeLayer::onSelectPremade(sender);
     }
-
-    
+ 
 };
-
-
 
 
 
@@ -1023,9 +1032,6 @@ bool createPresetPopup::init() {
 
     PopupMenuMain->addChildAtPosition(exitBtn, Anchor::TopLeft, ccp(15, -15));
     
-
-   
-
     this->setKeypadEnabled(true);
     this->setTouchEnabled(true);
 
@@ -1052,8 +1058,6 @@ void createPresetPopup::onBack(CCObject*) {
 void createPresetPopup::keyBackClicked() {
     this->onBack(nullptr);
 }
-
-
 
 
 
