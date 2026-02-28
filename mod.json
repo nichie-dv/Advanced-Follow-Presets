@@ -10,7 +10,7 @@
 	"name": "Advanced Follow Presets",
 	"version": "v0.1.0",
 	"developer": "nichie",
-	"description": "",
+	"description": "Overhauls the advanced follow premade settings",
 	"settings": {
 		"filepaths": {
 			"type": "title",
