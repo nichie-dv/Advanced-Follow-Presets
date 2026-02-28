@@ -373,7 +373,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         m_fields->m_PresetSettingsMenu->updateLayout(); 
 
         
-        m_fields->m_popupContentLayer->addChildAtPosition(m_fields->m_mainScrollLayer, Anchor::Center, ccp(0, 7));
+        
         
     }
 
@@ -597,7 +597,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         reloadPresets();
 
    
-        
+        m_fields->m_popupContentLayer->addChildAtPosition(popupNodeScrollingLayer, Anchor::Center, ccp(0, 7));
         m_fields->m_popupContentLayer->addChildAtPosition(popupScrollingBG, Anchor::Center, ccp(0, 7));
 
         this->setTouchMode(kCCTouchesOneByOne);
@@ -626,7 +626,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             log::warn("Preset exists: {}", name);
         }
         else {
-            if (name.length() > 0) {
+            if (!name.empty() > 0) {
                 
                 AdvancedFollowPreset preset = MySetupAdvFollowPopup::wrapPreset();
                 preset.name = name;

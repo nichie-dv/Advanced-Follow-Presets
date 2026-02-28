@@ -6,10 +6,6 @@
 #include <fstream>
 
 
-
-
-
-
 enum TabColor {
     GRAY, //"GJ_button_04.png"
     COOL_GRAY, //"GJ_button_05.png"
