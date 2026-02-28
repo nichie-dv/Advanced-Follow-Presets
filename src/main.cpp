@@ -120,7 +120,7 @@ class $modify(MySetupAdvFollowPopup, SetupAdvFollowPopup) {
 
 
     void onClose(CCObject* sender) {
-        log::info("clearing presets...");
+        log::debug("clearing presets...");
         Options = nullptr;
         SetupAdvFollowPopup::onClose(sender);
     }
@@ -273,7 +273,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             AdvancedFollowPreset preset = presetFromJson(jsonValue);
             if (std::find(disabledNames.begin(), disabledNames.end(), preset.name) == disabledNames.end()) {
                 Options->loadedPresets->push_back({preset, index, (templateFolderPath / "robtopHomingMissile.json").string()});
-                log::info("Loaded preset from {}", (templateFolderPath / "robtopHomingMissile.json").string());
+                log::debug("Loaded preset from {}", (templateFolderPath / "robtopHomingMissile.json").string());
                 index++;
             }
                 
@@ -292,7 +292,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             
             if (std::find(disabledNames.begin(), disabledNames.end(), preset.name) == disabledNames.end()) {
                 Options->loadedPresets->push_back({preset, index, (templateFolderPath / "robtopHomingBall.json").string()});
-                log::info("Loaded preset from {}", (templateFolderPath / "robtopHomingBall.json").string());
+                log::debug("Loaded preset from {}", (templateFolderPath / "robtopHomingBall.json").string());
                 index++;
             }
 
@@ -322,7 +322,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                 if (std::find(disabledNames.begin(), disabledNames.end(), preset.name) == disabledNames.end()) {
                     Options->loadedPresets->push_back({preset, index, entry.path().string()});           
                     index++;
-                    log::info("Loaded preset from {}", entry.path().string());
+                    log::debug("Loaded preset from {}", entry.path().string());
                 }
                     
 
