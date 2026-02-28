@@ -169,7 +169,11 @@ class $modify(MySetupAdvFollowPopup, SetupAdvFollowPopup) {
     
 };
 
-
+enum SelectionMode  {
+    SELECT_NORMAL, //click like a normal button
+    SELECT_DELETE, //select for deletion
+    SELECT_GRAB //select for a button click (maybe)
+};
 
 #include <Geode/modify/SelectPremadeLayer.hpp>
 class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
@@ -177,6 +181,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         createPresetPopup* m_popup = nullptr;
         CCMenu* m_ScrollingButtonMenu = nullptr;
         int m_itemSpriteSelection = 0;
+        int m_selectionMode = SelectionMode::SELECT_NORMAL;
     };
 
     void reloadPresets() {
@@ -674,7 +679,13 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         );
         
         button->setTag(tag);
-        button->setID(std::format("custom-entry-{}-{}"_spr, preset.name, tag));
+        button->setID(fmt::format("custom-entry-{}-{}"_spr, preset.name, tag));
+       
+        
+
+
+
+
         return button;
 
     }
