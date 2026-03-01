@@ -1,3 +1,6 @@
+# 0.2.1
+- clicking through popups fixed
+- spaced added to text filter
 # 0.2.0
 - Fixed touch prio making buttons unclickable
 - Added in game preset disabling/enabling

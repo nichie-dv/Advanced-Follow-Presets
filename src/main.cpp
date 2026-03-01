@@ -727,6 +727,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                     reloadPresets();
                 }
             }
+            
+            m_fields->m_ScrollingButtonMenu->setTouchEnabled(true);
 
         } else {
             FLAlertLayer::create("Missing Name", "Name of preset cannot be empty.", "OK")->show();
@@ -742,7 +744,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         auto popup = createPresetPopup::create();
         m_fields->m_popup = popup;
         auto menu = popup->getChildByID("popup-base");
-
+        m_fields->m_ScrollingButtonMenu->setTouchEnabled(false);
         auto buttonMenu = CCMenu::create();
         buttonMenu->ignoreAnchorPointForPosition(false);
         buttonMenu->setLayoutOptions(AnchorLayoutOptions::create());
@@ -813,7 +815,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         }
         
         auto nameInput = TextInput::create(250, "Enter a short name", "bigFont.fnt");
-        nameInput->setFilter("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_,'");
+        nameInput->setFilter(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_,'");
         nameInput->setLabel("Name");
         nameInput->setID("name-input");
         m_fields->m_nameInput = nameInput;
