@@ -1,3 +1,7 @@
+# 0.2.0
+- Fixed touch prio making buttons unclickable
+- Added in game preset disabling/enabling
+- Other general bugfixes
 # 0.1.2
 - dependency fix
 # 0.1.1

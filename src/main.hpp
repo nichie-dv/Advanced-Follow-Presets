@@ -323,6 +323,7 @@ struct LoadedPreset {
 
 struct PresetsOptions {
     std::vector<LoadedPreset>* loadedPresets; 
+    std::vector<LoadedPreset>* disabledPresets;
     SetupAdvFollowPopup* trigger;
 };
 

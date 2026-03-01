@@ -203,6 +203,10 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         createPresetPopup* m_popup = nullptr;
         TextInput* m_nameInput = nullptr;
         TextInput* m_descInput = nullptr;
+        CCLabelBMFont* m_topText = nullptr;
+
+        bool m_disableMode = false;
+        std::unordered_map<int, bool> m_nodeState; //tag isEnabled
 
         //bear with me
         ScrollLayer* m_mainScrollLayer = nullptr;
@@ -220,6 +224,10 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         std::vector<CCMenuItemSpriteExtra*> m_NodeBin;
     };
 
+    void updateTopText(std::string text) {
+        m_fields->m_topText->setString(text.c_str());
+    }
+
     void reloadPresets() {
         if (!Options) return;
 
@@ -231,6 +239,13 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             Options->loadedPresets->clear();
         } else {
             Options->loadedPresets = new std::vector<LoadedPreset>();
+            
+        }
+
+        if (Options->disabledPresets) {
+            Options->disabledPresets->clear();
+        } else {
+            Options->disabledPresets = new std::vector<LoadedPreset>();
         }
 
         std::vector<std::string> disabledNames;
@@ -264,6 +279,9 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         }
 
         int index = 0;
+        int disIndex = 5000;
+
+        m_fields->m_nodeState.clear();
 
         //load robtop presets first
         try {  
@@ -274,7 +292,12 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             if (std::find(disabledNames.begin(), disabledNames.end(), preset.name) == disabledNames.end()) {
                 Options->loadedPresets->push_back({preset, index, (templateFolderPath / "robtopHomingMissile.json").string()});
                 log::debug("Loaded preset from {}", (templateFolderPath / "robtopHomingMissile.json").string());
+                m_fields->m_nodeState[index] = true;
                 index++;
+            } else {
+                Options->disabledPresets->push_back({preset, disIndex, (templateFolderPath / "robtopHomingMissile.json").string()});
+                m_fields->m_nodeState[disIndex] = false;
+                disIndex++;
             }
                 
 
@@ -293,7 +316,12 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             if (std::find(disabledNames.begin(), disabledNames.end(), preset.name) == disabledNames.end()) {
                 Options->loadedPresets->push_back({preset, index, (templateFolderPath / "robtopHomingBall.json").string()});
                 log::debug("Loaded preset from {}", (templateFolderPath / "robtopHomingBall.json").string());
+                m_fields->m_nodeState[index] = true;
                 index++;
+            } else {
+                Options->disabledPresets->push_back({preset, disIndex, (templateFolderPath / "robtopHomingBall.json").string()});
+                m_fields->m_nodeState[disIndex] = false;
+                disIndex++;
             }
 
             
@@ -320,10 +348,15 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                 AdvancedFollowPreset preset = presetFromJson(jsonValue);
 
                 if (std::find(disabledNames.begin(), disabledNames.end(), preset.name) == disabledNames.end()) {
-                    Options->loadedPresets->push_back({preset, index, entry.path().string()});           
+                    Options->loadedPresets->push_back({preset, index, entry.path().string()});        
+                    m_fields->m_nodeState[index] = true;   
                     index++;
                     log::debug("Loaded preset from {}", entry.path().string());
-                }
+                } else {
+                    Options->disabledPresets->push_back({preset, disIndex, entry.path().string()});     
+                    m_fields->m_nodeState[disIndex] = false;
+                    disIndex++;
+                }   
                     
 
                 
@@ -338,16 +371,33 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         if (m_fields->m_ScrollingButtonMenu->getChildrenCount() > 0) {
             m_fields->m_ScrollingButtonMenu->removeAllChildren();
         }
+        
+
 
         for (const auto& entry : *Options->loadedPresets) {
             auto preset = entry.preset;
             auto tag = entry.tag;
 
             auto button = createPresetButton(preset, tag);
+            static_cast<NineSlice*>(button->getChildByIndex(0))->setCascadeColorEnabled(true);
+            
             m_fields->m_ScrollingButtonMenu->addChild(button);
 
         }
-        
+
+        if (m_fields->m_disableMode) {
+            for (const auto& entry : *Options->disabledPresets) {
+                auto preset = entry.preset;
+                auto tag = (entry.tag);
+
+                auto button = createPresetButton(preset, tag);
+                static_cast<NineSlice*>(button->getChildByIndex(0))->setCascadeColorEnabled(true);
+                static_cast<NineSlice*>(button->getChildByIndex(0))->setColor({ 129, 129, 129 });
+                
+                m_fields->m_ScrollingButtonMenu->addChild(button);
+
+            }
+        }
 
         float buttonWidth = 45;
         float containerWidth = m_fields->m_scrollContentLayer->getContentWidth();
@@ -355,8 +405,9 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         int buttonsPerRow = containerWidth / (buttonWidth + 6);
         int totalButtons = m_fields->m_ScrollingButtonMenu->getChildrenCount();
         int rows = (totalButtons + buttonsPerRow - 1) / buttonsPerRow;
-
-        m_fields->m_scrollContentLayer->addChild(m_fields->m_ScrollingButtonMenu);
+        if (m_fields->m_ScrollingButtonMenu->getParent() != m_fields->m_scrollContentLayer) {
+            m_fields->m_scrollContentLayer->addChild(m_fields->m_ScrollingButtonMenu);
+        }
         m_fields->m_scrollContentLayer->updateLayout();
 
         
@@ -395,6 +446,13 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             Options->loadedPresets = new std::vector<LoadedPreset>();
         }
 
+        if (Options->disabledPresets) {
+            Options->disabledPresets->clear();
+        } else {
+            Options->disabledPresets = new std::vector<LoadedPreset>();
+        }
+
+
 
 
 
@@ -405,6 +463,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         auto popupBgNode = static_cast<CCScale9Sprite*>(popupContentLayer->getChildByIndex(0));
         auto popupText = static_cast<CCLabelBMFont*>(popupContentLayer->getChildByIndex(1));
         auto presetButtonMenu = static_cast<CCMenu*>(popupContentLayer->getChildByIndex(2));
+        auto disableButtonMenu = CCMenu::create();
+
 
         m_fields->m_PresetSettingsMenu = presetButtonMenu;
         
@@ -412,6 +472,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         popupText->setID("preset-text");
         popupBgNode->setID("node-bg");
         presetButtonMenu->setID("preset-options-menu");
+        disableButtonMenu->setID("disable-button-menu");
 
         popupBgNode->setZOrder(-5);
 
@@ -436,10 +497,11 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             winSize.height / 2
         });
 
-        popupText->setString("Select Preset");
-
-
-
+        m_fields->m_topText = popupText;
+        updateTopText("Select Preset");
+        disableButtonMenu->ignoreAnchorPointForPosition(false);
+        disableButtonMenu->setContentSize({32, 32});
+        popupContentLayer->addChildAtPosition(disableButtonMenu, Anchor::BottomRight, ccp(-130, 57));
 
         float width = popupBgNode->getContentWidth();
         float height = popupBgNode->getContentHeight();
@@ -467,6 +529,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
 
         auto scrollingButtonMenu = CCMenu::create();
+        //die
+        scrollingButtonMenu->setTouchPriority(-520);
         scrollingButtonMenu->setID("preset-menu");
 
         auto closeButton = static_cast<CCMenuItemSpriteExtra*>(presetButtonMenu->getChildByIndex(2));
@@ -556,12 +620,30 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         SMnormalButton->setVisible(false);
         presetButtonMenu->addChild(SMnormalButton);
 
-   
+        auto disableButtonSprComp = CCNode::create();
+        auto disableSprBase = CCSprite::createWithSpriteFrameName("geode.loader/baseCircle_BigAlt_Green.png");
+        disableButtonSprComp->addChild(disableSprBase);
+        auto disableIcon = CCSprite::createWithSpriteFrameName("edit_downBtn2_001.png");
+        disableIcon->setZOrder(3);
+        disableIcon->setScale(1.25f);
+        disableButtonSprComp->addChild(disableIcon);
+        disableButtonSprComp->setScale(0.575f);
+        disableButtonSprComp->setContentSize({32, 32});
+
         
-
-
+        auto disableButton = CCMenuItemSpriteExtra::create(
+            disableButtonSprComp,
+            this,
+            menu_selector(MySelectPremadeLayer::toggleDisableSelectMode)
+        );
+        disableButton->setContentSize({32, 32});
+        disableButtonSprComp->ignoreAnchorPointForPosition(true);
+        disableButton->setLayoutOptions(AnchorLayoutOptions::create());
 
         
+        disableButtonMenu->setTouchEnabled(true);
+        disableButtonMenu->setTouchPriority(-520);
+        disableButtonMenu->addChildAtPosition(disableButton, Anchor::Center);
 
         auto item1 = static_cast<CCMenuItemSpriteExtra*>(presetButtonMenu->getChildByIndex(0));
         auto item2 = static_cast<CCMenuItemSpriteExtra*>(presetButtonMenu->getChildByIndex(1));
@@ -588,7 +670,9 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
         scrollingButtonMenu->setContentSize({scrollingContentLayer->getContentWidth() - 13, scrollingContentLayer->getContentHeight()});
         
-
+        if (m_fields->m_ScrollingButtonMenu != nullptr) {
+            m_fields->m_ScrollingButtonMenu->removeFromParent();
+        }
 
         m_fields->m_ScrollingButtonMenu = scrollingButtonMenu;
         m_fields->m_mainScrollLayer = popupNodeScrollingLayer;
@@ -601,7 +685,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         m_fields->m_popupContentLayer->addChildAtPosition(popupScrollingBG, Anchor::Center, ccp(0, 7));
 
         this->setTouchMode(kCCTouchesOneByOne);
-        this->setTouchPriority(-500);
 
         this->setKeypadEnabled(true);
         this->setTouchEnabled(true);
@@ -610,40 +693,45 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     }
 
     void onFinalizePreset(CCObject* sender) {
-        m_fields->m_popup->removeFromParentAndCleanup(true);
+        if (!m_fields->m_nameInput->getString().empty()) {
+            m_fields->m_popup->removeFromParentAndCleanup(true);
         
-        auto name = m_fields->m_nameInput->getString();
+            auto name = m_fields->m_nameInput->getString();
 
-        auto it = std::find_if(
-            Options->loadedPresets->begin(),
-            Options->loadedPresets->end(),
-            [name](const LoadedPreset& p) {
-                return p.preset.name == name;
-            }
-        );
-
-        if (it != Options->loadedPresets->end()) {
-            log::warn("Preset exists: {}", name);
-        }
-        else {
-            if (!name.empty() > 0) {
-                
-                AdvancedFollowPreset preset = MySetupAdvFollowPopup::wrapPreset();
-                preset.name = name;
-                preset.description = m_fields->m_descInput->getString();
-                preset.tabColor = m_fields->m_itemSpriteSelection;
-                
-                matjson::Value jsonTemp = presetToJson(preset);
-                {
-                    auto path = geode::Mod::get()->getSettingValue<std::filesystem::path>("presets-path") / (fmt::to_string(preset.name) + ".json");
-                    std::ofstream file(path);
-                    file << jsonTemp.dump(4);
-                    file.close();
+            auto it = std::find_if(
+                Options->loadedPresets->begin(),
+                Options->loadedPresets->end(),
+                [name](const LoadedPreset& p) {
+                    return p.preset.name == name;
                 }
-                reloadPresets();
-            }
-        }
+            );
 
+            if (it != Options->loadedPresets->end()) {
+                log::warn("Preset exists: {}", name);
+            }
+            else {
+                if (!name.empty() > 0) {
+                    
+                    AdvancedFollowPreset preset = MySetupAdvFollowPopup::wrapPreset();
+                    preset.name = name;
+                    preset.description = m_fields->m_descInput->getString();
+                    preset.tabColor = m_fields->m_itemSpriteSelection;
+                    
+                    matjson::Value jsonTemp = presetToJson(preset);
+                    {
+                        auto path = geode::Mod::get()->getSettingValue<std::filesystem::path>("presets-path") / (fmt::to_string(preset.name) + ".json");
+                        std::ofstream file(path);
+                        file << jsonTemp.dump(4);
+                        file.close();
+                    }
+                    reloadPresets();
+                }
+            }
+
+        } else {
+            FLAlertLayer::create("Missing Name", "Name of preset cannot be empty.", "OK")->show();
+        }
+        
         
 
         
@@ -716,7 +804,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             item->setZOrder(10);
 
             if (i == 0) {
-                item->setColor({ 104, 104, 104 });
+                static_cast<NineSlice*>(item->getChildByIndex(0))->setColor({ 104, 104, 104 });
             }
             
             
@@ -725,13 +813,14 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         }
         
         auto nameInput = TextInput::create(250, "Enter a short name", "bigFont.fnt");
+        nameInput->setFilter("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_,'");
         nameInput->setLabel("Name");
         nameInput->setID("name-input");
         m_fields->m_nameInput = nameInput;
 
-        auto descInput = TextInput::create(300, "Enter a brief description", "bigFont.fnt");
+        auto descInput = TextInput::create(325, "Enter a brief description (optional)", "bigFont.fnt");
         descInput->setLabel("Description");
-        nameInput->setID("description-input");
+        descInput->setID("description-input");
         m_fields->m_descInput = descInput;
         
 
@@ -765,9 +854,9 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         m_fields->m_itemSpriteSelection = sender->getTag();
         for (auto item : m_fields->m_popup->iconButtons) {
             if (item->getTag() == sender->getTag()) {
-                item->setColor({ 104, 104, 104 });
+                static_cast<NineSlice*>(item->getChildByIndex(0))->setColor({ 104, 104, 104 });
             } else {
-                item->setColor({ 255, 255, 255 });
+                static_cast<NineSlice*>(item->getChildByIndex(0))->setColor({ 255, 255, 255 });
             }
         }
     }
@@ -802,58 +891,145 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     }
 
     void deleteSelectedFromBin(CCObject* sender) {
-        m_fields->m_selectionMode = SelectionMode::SELECT_NORMAL;
-
-        m_fields->m_PresetSettingsMenu->getChildByID("SMdelete-preset-button")->setVisible(true);
-        m_fields->m_PresetSettingsMenu->getChildByID("SMnormal-preset-button")->setVisible(false);  
-        m_fields->m_PresetSettingsMenu->getChildByID("confirm-delete-preset-button")->setVisible(false);
-        m_fields->m_PresetSettingsMenu->updateLayout();
-
-        //delete jsons
         if (m_fields->m_NodeBin.size() > 0) {
-           
-            std::vector<int> tagsToRemove;
-            for (auto obj : m_fields->m_NodeBin) {
-                tagsToRemove.push_back(obj->getTag());
-            }
+            createQuickPopup("Delete Presets", "Do you want to delete the selected presets?", "no", "yes", [this](auto, bool btn2) {
+            if (btn2) {
+                this->updateTopText("Select Preset");
+                m_fields->m_selectionMode = SelectionMode::SELECT_NORMAL;
 
-       
-            Options->loadedPresets->erase(
-                std::remove_if(
-                    Options->loadedPresets->begin(),
-                    Options->loadedPresets->end(),
-                    [&](const LoadedPreset& p) {
-                        if (std::ranges::find(tagsToRemove, p.tag) != tagsToRemove.end()) {
-                            std::filesystem::remove(p.filePath); 
-                            return true; 
-                        }
-                        return false;
+                m_fields->m_PresetSettingsMenu->getChildByID("SMdelete-preset-button")->setVisible(true);
+                m_fields->m_PresetSettingsMenu->getChildByID("SMnormal-preset-button")->setVisible(false);  
+                m_fields->m_PresetSettingsMenu->getChildByID("confirm-delete-preset-button")->setVisible(false);
+                m_fields->m_PresetSettingsMenu->updateLayout();
+
+                //delete jsons
+                
+                
+                    std::vector<int> tagsToRemove;
+                    for (auto obj : m_fields->m_NodeBin) {
+                        tagsToRemove.push_back(obj->getTag());
                     }
-                ),
-                Options->loadedPresets->end()
-            );
-            
-            m_fields->m_NodeBin.clear();
 
-            reloadPresets();
+            
+                    Options->loadedPresets->erase(
+                        std::remove_if(
+                            Options->loadedPresets->begin(),
+                            Options->loadedPresets->end(),
+                            [&](const LoadedPreset& p) {
+                                if (std::ranges::find(tagsToRemove, p.tag) != tagsToRemove.end()) {
+                                    std::filesystem::remove(p.filePath); 
+                                    return true; 
+                                }
+                                return false;
+                            }
+                        ),
+                        Options->loadedPresets->end()
+                    );
+                    
+                    m_fields->m_NodeBin.clear();
+
+                    reloadPresets();
+                }
+            
+            });
         }
+
+        
         
 
     }
 
+    void toggleDisableSelectMode(CCObject* sender) {
+        
+
+        if (!m_fields->m_disableMode) { 
+            //enter toggle mode
+            for (const auto& [tag, enabled] : m_fields->m_nodeState) {
+                log::debug("Tag {} -> {}", tag, enabled ? "enabled" : "disabled");
+            }
+
+            updateTopText("Toggle Presets");
+            m_fields->m_selectionMode = SelectionMode::SELECT_GRAB;
+
+            for (const auto& [tag, enabled] : m_fields->m_nodeState) {
+                auto node = m_fields->m_ScrollingButtonMenu->getChildByTag(tag);
+                if (!node) continue;
+
+                auto button = static_cast<CCMenuItemSpriteExtra*>(node);
+                if (!enabled) {
+                    static_cast<NineSlice*>(button->getChildByIndex(0))->setColor({129, 129, 129});
+                } else {
+                    static_cast<NineSlice*>(button->getChildByIndex(0))->setColor({255, 255, 255});
+                }
+            }
+
+            m_fields->m_disableMode = true;
+
+        } else { 
+            //exit toggle mode
+
+            for (const auto& [tag, enabled] : m_fields->m_nodeState) {
+                log::debug("Tag {} -> {}", tag, enabled ? "enabled" : "disabled");
+            }
+
+
+
+            updateTopText("Select Preset");
+            m_fields->m_selectionMode = SelectionMode::SELECT_NORMAL;
+
+            
+            
+
+            matjson::Value disabledJson;
+            std::vector<std::string> disabledNames;
+            for (const auto& [tag, enabled] : m_fields->m_nodeState) {
+                if (!enabled) {
+                    
+                    auto it = std::ranges::find_if(*Options->loadedPresets, [&](const LoadedPreset& p) { return p.tag == tag; });
+                    if (it != Options->loadedPresets->end()) {
+                        disabledNames.push_back(it->preset.name); 
+                        continue;
+                    }
+
+                    auto dit = std::ranges::find_if(*Options->disabledPresets, [&](const LoadedPreset& p) { return p.tag == tag; });
+                    if (dit != Options->disabledPresets->end()) {
+                        disabledNames.push_back(dit->preset.name); 
+                    }
+                }
+            }
+
+            disabledJson["disabled"] = disabledNames;
+
+            auto path = Mod::get()->getSaveDir() / "disabled.json";
+            std::ofstream file(path);
+            file << disabledJson.dump(4);
+            file.close();
+
+            log::debug("saved {} disabled presets to {}", disabledNames.size(), path);
+
+            m_fields->m_disableMode = false;
+        }
+        
+        reloadPresets();
+
+    }
+
+
     void toggleDeleteSelectMode(CCObject* sender) {
-        m_fields->m_selectionMode = SelectionMode::SELECT_DELETE;
+        if (!m_fields->m_disableMode) {
+            updateTopText("Delete Presets");
+            m_fields->m_selectionMode = SelectionMode::SELECT_DELETE;
 
-        m_fields->m_PresetSettingsMenu->getChildByID("SMdelete-preset-button")->setVisible(false);
-        m_fields->m_PresetSettingsMenu->getChildByID("SMnormal-preset-button")->setVisible(true);
-        m_fields->m_PresetSettingsMenu->getChildByID("confirm-delete-preset-button")->setVisible(true);
-        m_fields->m_PresetSettingsMenu->updateLayout();
-
-
+            m_fields->m_PresetSettingsMenu->getChildByID("SMdelete-preset-button")->setVisible(false);
+            m_fields->m_PresetSettingsMenu->getChildByID("SMnormal-preset-button")->setVisible(true);
+            m_fields->m_PresetSettingsMenu->getChildByID("confirm-delete-preset-button")->setVisible(true);
+            m_fields->m_PresetSettingsMenu->updateLayout();
+        }
 
     }
 
     void toggleNormalSelectMode(CCObject* sender) {
+        updateTopText("Select Preset");
         m_fields->m_selectionMode = SelectionMode::SELECT_NORMAL;
 
         m_fields->m_PresetSettingsMenu->getChildByID("SMdelete-preset-button")->setVisible(true);
@@ -862,7 +1038,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         m_fields->m_PresetSettingsMenu->updateLayout();
 
         for (auto item : m_fields->m_NodeBin) {
-            item->setColor({255, 255, 255});
+            static_cast<NineSlice*>(item->getChildByIndex(0))->setColor({255, 255, 255});
         }
         m_fields->m_NodeBin.clear();
     }
@@ -871,28 +1047,38 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         auto object = static_cast<CCMenuItemSpriteExtra*>(sender);
         switch (m_fields->m_selectionMode) {
             case SelectionMode::SELECT_NORMAL:
+                
+               
                 SelectPremadeLayer::onSelectPremade(sender);
                 break;
 
-            case SelectionMode::SELECT_DELETE:
+            case SelectionMode::SELECT_DELETE: 
+            {
+                
                 std::vector<CCMenuItemSpriteExtra*>::iterator it = std::find(m_fields->m_NodeBin.begin(), m_fields->m_NodeBin.end(), object);
 
                 if (it != m_fields->m_NodeBin.end()) {
-                    m_fields->m_NodeBin.erase(it);
-                    object->setColor({ 255, 255, 255 });
+                    m_fields->m_NodeBin.erase(it);  
+                    static_cast<NineSlice*>(object->getChildByIndex(0))->setColor({ 255, 255, 255 });
+                    
                 } else {
                     m_fields->m_NodeBin.push_back(object);
-                    object->setColor({ 129, 129, 129 });
-                }
-
-                if (m_fields->m_NodeBin.size() > 1) {
-
+                    static_cast<NineSlice*>(object->getChildByIndex(0))->setColor({ 129, 129, 129 });
                 }
 
                 break;
-        }
-       
-        
+            }
+                
+  
+            case SelectionMode::SELECT_GRAB:
+
+                if (m_fields->m_nodeState.find(object->getTag()) != m_fields->m_nodeState.end()) {
+
+                    m_fields->m_nodeState[object->getTag()] = !m_fields->m_nodeState[object->getTag()];
+                    static_cast<NineSlice*>(object->getChildByIndex(0))->setColor(m_fields->m_nodeState[object->getTag()] ? ccColor3B{255,255,255} : ccColor3B{129,129,129});
+                }
+                break;
+        }  
     }
 
     CCMenuItemSpriteExtra* createPresetButton(AdvancedFollowPreset preset, int tag) {
@@ -919,10 +1105,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         btnLabel->setScale(scale);
 
 
-        
-        
-
-        
         btnLabel->setZOrder(2);
         btnSprite->addChildAtPosition(btnLabel, Anchor::Center);
 
@@ -944,7 +1126,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     }
  
 };
-
 
 
 
@@ -1058,8 +1239,6 @@ void createPresetPopup::onBack(CCObject*) {
 void createPresetPopup::keyBackClicked() {
     this->onBack(nullptr);
 }
-
-
 
 createPresetPopup* createPresetPopup::create() {
     auto ret = new createPresetPopup();
