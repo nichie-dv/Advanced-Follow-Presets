@@ -18,6 +18,7 @@ std::string operator""_custom_ext(const char* str, size_t len)
 struct PresetItemBundle {
     AdvancedFollowPreset preset;
     CCMenuItemSpriteExtra* button;
+    CCSprite* buttonSprite;
     bool enabled = false;
     bool inBin = false;
     std::filesystem::path PresetPath;

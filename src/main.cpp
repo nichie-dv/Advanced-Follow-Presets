@@ -153,6 +153,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         btnLabel->setScale(scale);
         btnLabel->setZOrder(2);
         btnSprite->addChildAtPosition(btnLabel, Anchor::Center);
+        bundle->buttonSprite = btnSprite;
 
         auto button = CCMenuItemSpriteExtra::create(
             btnSprite,
@@ -217,7 +218,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         {
             matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
             AdvancedFollowPreset preset = PresetFromJson(json);
-            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
+            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
             if (!IsInVector(disabledNames, preset.name)) {
                 OptionsContainer->PresetMap[index]->enabled = true;
             }
@@ -227,7 +228,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         {
             matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
             AdvancedFollowPreset preset = PresetFromJson(json);
-            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
+            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
             if (!IsInVector(disabledNames, preset.name)) {
                 OptionsContainer->PresetMap[index]->enabled = true;
             }
@@ -241,7 +242,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             try {
                 matjson::Value json = FileToJson(entry.path());
                 AdvancedFollowPreset preset = PresetFromJson(json);
-                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, false, false, entry.path());
+                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, entry.path());
                 if (!IsInVector(disabledNames, preset.name)) {
                     OptionsContainer->PresetMap[index]->enabled = true;
                 }
@@ -252,7 +253,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         }
         
         
-        if (isReload) fields->m_ScrollingButtonMenu->removeAllChildren();
+        if (isReload) fields->m_ScrollingButtonMenu->removeAllChildrenWithCleanup(true);
         
         for (const auto& entry : OptionsContainer->PresetMap) {
             int index = entry.first;
@@ -265,7 +266,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             button->setID(fmt::format("{}-{}", bundle->preset.name, index));
             bundle->button = button;
             
-            auto sprite = static_cast<CCSprite*>(button->getChildByIndex(0));
+            auto sprite = bundle->buttonSprite;
             sprite->setCascadeColorEnabled(true);
             if (!bundle->enabled) {
                 sprite->setColor(DisabledColor);
@@ -561,7 +562,9 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             m_fields->m_PresetButtonMenu->getChildByID("normal-preset-button")->setVisible(true);
             m_fields->m_PresetButtonMenu->getChildByID("confirm-delete-preset-button")->setVisible(true);
             m_fields->m_PresetButtonMenu->updateLayout();
+            LoadPresets();
         }
+        
 
     }
 
@@ -578,8 +581,9 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         for (const auto& [tag, bundle] : OptionsContainer->PresetMap)
         {
             bundle->inBin = false;
-            static_cast<CCSprite*>(bundle->button->getChildByIndex(0))->setColor(EnabledColor);  
+            if (bundle->buttonSprite != nullptr && bundle->enabled) bundle->buttonSprite->setColor(EnabledColor); 
         }
+        LoadPresets();
     }
 
     //Preset button presses
@@ -604,10 +608,10 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             case SelectionMode::SELECT_DELETE: 
                 if (!OptionsContainer->PresetMap[object->getTag()]->inBin) {
                     OptionsContainer->PresetMap[object->getTag()]->inBin = true;
-                    static_cast<CCSprite*>(OptionsContainer->PresetMap[object->getTag()]->button->getChildByIndex(0))->setColor(DisabledColor);  
+                    OptionsContainer->PresetMap[object->getTag()]->buttonSprite->setColor(DisabledColor);  
                 } else {
                     OptionsContainer->PresetMap[object->getTag()]->inBin = false;
-                    static_cast<CCSprite*>(OptionsContainer->PresetMap[object->getTag()]->button->getChildByIndex(0))->setColor(EnabledColor); 
+                    OptionsContainer->PresetMap[object->getTag()]->buttonSprite->setColor(EnabledColor); 
                 }
                 break;
             
@@ -615,10 +619,10 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             case SelectionMode::SELECT_GRAB:
                 if (OptionsContainer->PresetMap[object->getTag()]->enabled) {
                     OptionsContainer->PresetMap[object->getTag()]->enabled = false;
-                    static_cast<CCSprite*>(OptionsContainer->PresetMap[object->getTag()]->button->getChildByIndex(0))->setColor(DisabledColor);  
+                    OptionsContainer->PresetMap[object->getTag()]->buttonSprite->setColor(DisabledColor);  
                 } else {
                     OptionsContainer->PresetMap[object->getTag()]->enabled = true;
-                    static_cast<CCSprite*>(OptionsContainer->PresetMap[object->getTag()]->button->getChildByIndex(0))->setColor(EnabledColor); 
+                    OptionsContainer->PresetMap[object->getTag()]->buttonSprite->setColor(EnabledColor); 
                 }
                 break;
         }  
