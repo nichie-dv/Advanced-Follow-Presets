@@ -189,15 +189,15 @@ inline const char* TabIconForIndex(int index) {
     switch (index) {
         case TabColor::GRAY: return "GJ_button_04.png";
         case TabColor::COOL_GRAY: return "GJ_button_05.png";
-        case TabColor::BLACK: return "GE_button_05.png";
+        case TabColor::BLACK: return "geode.loader/GE_button_05.png";
         case TabColor::RED: return "GJ_button_06.png";
         case TabColor::PINK: return "GJ_button_03.png";
-        case TabColor::LIGHT_PINK: return "GE_button_02.png";
-        case TabColor::PURPLE: return "GE_button_03.png";
+        case TabColor::LIGHT_PINK: return "geode.loader/GE_button_02.png";
+        case TabColor::PURPLE: return "geode.loader/GE_button_03.png";
         case TabColor::CYAN: return "GJ_button_02.png";
-        case TabColor::BLUE: return "GE_button_01.png";
+        case TabColor::BLUE: return "geode.loader/GE_button_01.png";
         case TabColor::GREEN: return "GJ_button_01.png";
-        case TabColor::A_SECRET_THIRD_OPTION: return "GE_button_04.png";
+        case TabColor::A_SECRET_THIRD_OPTION: return "geode.loader/GE_button_04.png";
         default: return "GJ_button_04.png";
     }
 };

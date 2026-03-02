@@ -1,3 +1,6 @@
+# 0.3.1
+- Texture load fix
+
 # 0.3.0
 - General code cleanup
 - Bugfixes
