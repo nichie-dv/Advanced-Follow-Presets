@@ -1,5 +1,5 @@
 {
-	"geode": "5.2.0",
+	"geode": "5.3.0",
 	"gd": {
 		"win": "2.2081",
 		"android": "2.2081",
@@ -8,7 +8,7 @@
 	},
 	"id": "nichie.advanced-follow-presets",
 	"name": "Advanced Follow Presets",
-	"version": "v0.2.1",
+	"version": "v0.3.0",
 	"developer": "nichie",
 	"links": {
 		"homepage": "https://nichie.dev",
@@ -44,6 +44,19 @@
 			"name": "Wokemode",
 			"description": "Enables the transgender flag button",
 			"default": false
+		},
+		"confirm-use": {
+			"type": "bool",
+			"name": "Confirm use popup",
+			"description": "Displays a popup before using a preset warning the user.",
+			"default": true
+		},
+		"file-extension": {
+			"type": "string",
+			"name": "File Extension",
+			"description": "Changes the preset file extension (json base).",
+			"default": "json",
+			"filter": "abcdefghijklmnopqrstuvwxyz"
 		}
 	}
 }
