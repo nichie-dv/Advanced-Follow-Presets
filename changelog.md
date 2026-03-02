@@ -1,3 +1,6 @@
+# 0.3.3
+- Fixed crash with back cancel delete button
+
 # 0.3.2
 - Touch prio fix (evil)
 
