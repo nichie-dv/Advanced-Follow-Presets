@@ -1,3 +1,6 @@
+# 0.3.4
+- Reset tab color selection on popup open
+
 # 0.3.3
 - Fixed crash with back cancel delete button
 

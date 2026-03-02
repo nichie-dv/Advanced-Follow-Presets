@@ -363,6 +363,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     //Creates the creation menu popup
     void onCreateNewPreset(CCObject* sender) {
         auto popup = PresetPopup::create();
+        m_fields->m_tabColorSelection = 0;
         m_fields->m_createPopup = popup;
         auto menu = popup->getChildByID("popup-base");
 
