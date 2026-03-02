@@ -1,3 +1,6 @@
+# 0.3.6
+- Fixed crashing when deleting robtop presets
+
 # 0.3.5
 - Minor ui tweaks
 

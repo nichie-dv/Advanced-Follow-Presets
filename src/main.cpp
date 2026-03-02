@@ -216,23 +216,34 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         //Set up PresetMap with all items (enabled and disabled) and set their state
         int index = 0;
         {
-            matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
-            AdvancedFollowPreset preset = PresetFromJson(json);
-            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
-            if (!IsInVector(disabledNames, preset.name)) {
-                OptionsContainer->PresetMap[index]->enabled = true;
+            try {
+                matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
+                AdvancedFollowPreset preset = PresetFromJson(json);
+                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
+                if (!IsInVector(disabledNames, preset.name)) {
+                    OptionsContainer->PresetMap[index]->enabled = true;
+                }
+                index++;
+            } catch (const std::exception& e) {
+                log::warn("Failed to parse preset {}: {}", (OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext).string(), e.what());
             }
-            index++;
         }
+            
 
         {
             matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
-            AdvancedFollowPreset preset = PresetFromJson(json);
-            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
-            if (!IsInVector(disabledNames, preset.name)) {
-                OptionsContainer->PresetMap[index]->enabled = true;
+            try {
+                AdvancedFollowPreset preset = PresetFromJson(json);
+                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
+                if (!IsInVector(disabledNames, preset.name)) {
+                    OptionsContainer->PresetMap[index]->enabled = true;
+                }
+                index++;
+            } catch (const std::exception& e) {
+                log::warn("Failed to parse preset {}: {}", (OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext).string(), e.what());
             }
-            index++;
+            
+            
         }
         
         for (const auto& entry : std::filesystem::directory_iterator(OptionsContainer->PresetsPath)) {
