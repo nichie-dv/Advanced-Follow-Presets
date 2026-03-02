@@ -1,3 +1,6 @@
+# 0.3.2
+- Touch prio fix (evil)
+
 # 0.3.1
 - Texture load fix
 

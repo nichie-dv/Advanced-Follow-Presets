@@ -853,7 +853,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             scrollingContentLayer->getContentWidth() - 13,
             scrollingContentLayer->getContentHeight()
         });
-
+        scrollingButtonMenu->setTouchPriority(-510);
+        scrollingButtonMenu->setTouchEnabled(true);
         scrollingContentLayer->addChild(scrollingButtonMenu);
         
 
