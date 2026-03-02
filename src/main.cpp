@@ -301,7 +301,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         contentLayer->updateLayout();
         fields->m_ScrollingButtonMenu->updateLayout();
         
-        contentLayer->setContentHeight(fields->m_ScrollingButtonMenu->getContentHeight());
+        contentLayer->setContentHeight(fields->m_ScrollingButtonMenu->getContentHeight() + 6);
         contentLayer->updateLayout();
 
         static_cast<ScrollLayer*>(contentLayer->getParent())->scrollToTop();
@@ -362,7 +362,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
     //Creates the creation menu popup
     void onCreateNewPreset(CCObject* sender) {
-        auto popup = PresetPopup::create();
+        auto popup = PresetPopup::create(m_fields->m_ScrollingButtonMenu);
         m_fields->m_tabColorSelection = 0;
         m_fields->m_createPopup = popup;
         auto menu = popup->getChildByID("popup-base");

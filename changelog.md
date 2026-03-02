@@ -1,3 +1,6 @@
+# 0.3.5
+- Minor ui tweaks
+
 # 0.3.4
 - Reset tab color selection on popup open
 

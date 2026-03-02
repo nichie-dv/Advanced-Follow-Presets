@@ -2,9 +2,10 @@
 #include <Geode/Geode.hpp>
 
 
+
 bool PresetPopup::init() {
     if (!CCLayer::init()) return false;
-
+    
     CCTouchDispatcher::get()->registerForcePrio(this, 2);
     auto winSize = CCDirector::get()->getWinSize();
     this->setID("create-preset-alert"_spr);  
@@ -106,6 +107,8 @@ PresetPopup::~PresetPopup() {
 void PresetPopup::onBack(CCObject*) {   
     this->setKeypadEnabled(false);
     this->setTouchEnabled(false);
+    this->menu->setTouchEnabled(true);
+    this->menu->setKeypadEnabled(true);
     this->removeFromParent();
 }
 
@@ -113,8 +116,9 @@ void PresetPopup::keyBackClicked() {
     this->onBack(nullptr);
 }
 
-PresetPopup* PresetPopup::create() {
+PresetPopup* PresetPopup::create(CCMenu* menu) {
     auto ret = new PresetPopup();
+    ret->menu = menu;
     if (ret->init()) {
         ret->autorelease();
         return ret;
