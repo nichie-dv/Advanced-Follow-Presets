@@ -1,4 +1,5 @@
 #include <Geode/Geode.hpp>
+#include <Geode/utils/string.hpp>
 #include <vector>
 #include <iostream>
 
@@ -32,7 +33,7 @@ $on_mod(Loaded) {
         !DoesFileOrPathExist(Mod::get()->getSettingValue<std::filesystem::path>("template-path") / "Homing Ball"_custom_ext) ||
         !DoesFileOrPathExist(Mod::get()->getSettingValue<std::filesystem::path>("template-path") / "Template"_custom_ext)) {
         
-        log::debug("creating new templates at {}", Mod::get()->getSettingValue<std::filesystem::path>("template-path").string());
+        log::debug("creating new templates at {}", utils::string::pathToString(Mod::get()->getSettingValue<std::filesystem::path>("template-path")));
         CreateTemplates();
     }
 
@@ -42,10 +43,8 @@ $on_mod(Loaded) {
         matjson::Value disabledJson;
         disabledJson["disabled"] = std::vector<std::string>{};
         auto path = Mod::get()->getSaveDir() / "disabled"_custom_ext;
-        std::ofstream file(path); 
-        file << disabledJson.dump(4);      
-        file.close();
-        log::debug("created disabled list at {}", Mod::get()->getSaveDir() / "disabled"_custom_ext);
+        JsonToFile(disabledJson, path);
+        log::debug("created disabled list at {}", utils::string::pathToString(Mod::get()->getSaveDir() / "disabled"_custom_ext));
     }
 }
 
@@ -216,32 +215,28 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         //Set up PresetMap with all items (enabled and disabled) and set their state
         int index = 0;
         {
-            try {
-                matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
-                AdvancedFollowPreset preset = PresetFromJson(json);
-                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
-                if (!IsInVector(disabledNames, preset.name)) {
-                    OptionsContainer->PresetMap[index]->enabled = true;
-                }
-                index++;
-            } catch (const std::exception& e) {
-                log::warn("Failed to parse preset {}: {}", (OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext).string(), e.what());
+            
+            matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
+            AdvancedFollowPreset preset = PresetFromJson(json);
+            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
+            if (!IsInVector(disabledNames, preset.name)) {
+                OptionsContainer->PresetMap[index]->enabled = true;
             }
+            index++;
+           
         }
             
 
         {
             matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
-            try {
-                AdvancedFollowPreset preset = PresetFromJson(json);
-                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
-                if (!IsInVector(disabledNames, preset.name)) {
-                    OptionsContainer->PresetMap[index]->enabled = true;
-                }
-                index++;
-            } catch (const std::exception& e) {
-                log::warn("Failed to parse preset {}: {}", (OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext).string(), e.what());
+            
+            AdvancedFollowPreset preset = PresetFromJson(json);
+            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
+            if (!IsInVector(disabledNames, preset.name)) {
+                OptionsContainer->PresetMap[index]->enabled = true;
             }
+            index++;
+            
             
             
         }
@@ -250,17 +245,15 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             if (!entry.is_regular_file()) continue;
             if (entry.path().extension() != OptionsContainer->CustomExt) continue;
 
-            try {
-                matjson::Value json = FileToJson(entry.path());
-                AdvancedFollowPreset preset = PresetFromJson(json);
-                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, entry.path());
-                if (!IsInVector(disabledNames, preset.name)) {
-                    OptionsContainer->PresetMap[index]->enabled = true;
-                }
-                index++;
-            } catch (const std::exception& e) {
-                log::warn("Failed to parse preset {}: {}", entry.path().string(), e.what());
+           
+            matjson::Value json = FileToJson(entry.path());
+            AdvancedFollowPreset preset = PresetFromJson(json);
+            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, entry.path());
+            if (!IsInVector(disabledNames, preset.name)) {
+                OptionsContainer->PresetMap[index]->enabled = true;
             }
+            index++;
+        
         }
         
         
@@ -358,7 +351,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                 m_fields->m_ScrollingButtonMenu->setTouchEnabled(true);
                 matjson::Value json = PresetToJson(preset);
                 JsonToFile(json, OptionsContainer->PresetsPath / (preset.name + OptionsContainer->CustomExt));
-                log::debug("Saved new preset {}.", (OptionsContainer->PresetsPath / (preset.name + OptionsContainer->CustomExt)).string());
+                log::debug("Saved new preset {}.", utils::string::pathToString(OptionsContainer->PresetsPath / (preset.name + OptionsContainer->CustomExt)));
                 LoadPresets();
 
             } else {

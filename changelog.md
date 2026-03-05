@@ -1,3 +1,6 @@
+# 0.3.7
+- Android compatability update
+
 # 0.3.6
 - Fixed crashing when deleting robtop presets
 

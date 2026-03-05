@@ -68,61 +68,52 @@ AdvancedFollowPreset PresetFromJson(const matjson::Value& json) {
 
 //Parses json from path and returns it
 matjson::Value FileToJson(const filesystem::path& filepath) {
-    try {
-        ifstream file(filepath);
-        if (!file.is_open()) {
-            log::warn("Failed to open file at {}", filepath.string());
-            return matjson::Value();
-        }
-
-        std::string jsonStr((istreambuf_iterator<char>(file)), istreambuf_iterator<char>());
-
-        auto parsed = matjson::parse(jsonStr);
-        if (!parsed) {
-            log::warn("Failed to parse json at {}: {}", filepath.string(), parsed.unwrapErr());
-            return matjson::Value();
-        }
-
-        return parsed.unwrap();
-    }
-    catch (const exception& e) {
-        log::warn("Exception parsing json at {}: {}", filepath.string(), e.what());
+    auto res = utils::file::readJson(filepath);
+    if (res.isErr()) {
+        log::warn("Failed to read file at {}: {}", utils::string::pathToString(filepath), res.err());
         return matjson::Value();
     }
+    return res.unwrap();
+    
 }
 
 //Writes given json to given filepath
 void JsonToFile(const matjson::Value& json, const filesystem::path& filepath) {
-    try {
-        ofstream file(filepath);
-        if (!file.is_open()) {
-            log::warn("Failed to open file at {}", filepath.string());
-            return;
-        }
-        file << json.dump(4);
-        file.close();
-    } catch (const exception& e) {
-        log::warn("Failed to write json to path {}: {}", filepath, e.what());
+    if (json.isNull()) {
+        log::warn("Json is null ({}).", utils::string::pathToString(filepath));
+        return;
     }
+
+    auto res = utils::file::writeToJson(filepath, json);
+    if (res.isErr())
+        log::warn("Failed writing json to {}: {}", utils::string::pathToString(filepath), res.err());
+    
 }
 
 //Deletes json file with given filepath (maybe dangerous)
 void FileToTrash(const filesystem::path& filepath) {
-    try {
-        filesystem::remove(filepath);
-    } catch (const exception& e) {
-        log::warn("Failed to write delete file at path {}: {}", filepath.string(), e.what());
+    if (!DoesFileOrPathExist(filepath)) {
+        log::warn("Path does not exist: {}", utils::string::pathToString(filepath));
+        return;
     }
+
+    std::error_code code;
+    filesystem::remove(filepath, code);
+    
+    if (code)
+        log::warn("Failed to delete file at path {}: {}", utils::string::pathToString(filepath), code.message());
 }
 
 //I'm not really sure why i made this but it looks nicer (probably not)
 bool DoesFileOrPathExist(const filesystem::path& filepath) {
-    return (filesystem::exists(filepath));
+    return filesystem::exists(filepath);
 }
 
 //Wrapper for create path (cleaner)
 void CreatePath(const filesystem::path& filepath) {
-    filesystem::create_directories(filepath);
+    auto res = utils::file::createDirectory(filepath);
+    if (res.isErr())
+        log::warn("Error with {}: {}", utils::string::pathToString(filepath), res.err());
 }
 
 
