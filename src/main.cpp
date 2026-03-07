@@ -78,33 +78,32 @@ class $modify(MySetupAdvFollowPopup, SetupAdvFollowPopup) {
         }
 
         preset = OptionsContainer->PresetMap[type]->preset;
-        int mode = 0;
+        auto [entries, mode] = UnwrapPreset(preset);
+        
 
-        //Iterate over all mapped members
-        for (auto& mapItem : memberMappings) {
-            int propID = mapItem.propID;
-            float value = 0.0f;
+        for (const auto& kv : entries) {
 
-            if (mapItem.intMember) value = static_cast<float>(preset.*(mapItem.intMember));
-            else if (mapItem.floatMember) value = preset.*(mapItem.floatMember);
-            else if (mapItem.boolMember) value = preset.*(mapItem.boolMember) ? 1.0f : 0.0f;
-            else if (mapItem.enumAFMMember) value = static_cast<float>(static_cast<int>(preset.*(mapItem.enumAFMMember)));
-            else if (mapItem.enumAFP2Member) {
-                value = static_cast<float>(static_cast<int>(preset.*(mapItem.enumAFP2Member)));
-                mode = static_cast<int>(preset.*(mapItem.enumAFP2Member));
-            }
+            int propID = kv.id;
+            float value = kv.value;
 
-            //Check if value toggle exists
             auto toggleObj = this->m_valueToggles->objectForKey(propID);
-            if (!toggleObj) {
+
+            if (!toggleObj)
                 this->updateValueControls(propID, value);
-            } else {
+            else
                 this->valueDidChange(propID, value);
-            }
 
             this->valueChanged(propID, value);
-            this->updateInputValue(propID, value);
+            this->updateValue(propID, value);
         }
+
+        //Update follow checkboxes
+        this->updateValueControls(138, preset.follow_p1 ? 1.0f : 0.0f);
+        this->updateValueControls(200, preset.follow_p2 ? 1.0f : 0.0f);
+        this->updateValueControls(201, preset.follow_c ? 1.0f : 0.0f);
+
+        //Update follow gid last because the previous 3 will overwrite this one even if they're = 0
+        this->valueChanged(71, preset.follow_group);
 
         this->updateMode(mode);
     }
@@ -194,11 +193,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             log::warn("'disabled' key is not an array in disabled.json, recreating file...");
             matjson::Value tmp;
             tmp["disabled"] = std::vector<std::string>{};
-            std::ofstream file(OptionsContainer->DisabledPath); 
-            file << tmp.dump(4);      
-            file.close();
-
-
+            JsonToFile(tmp, OptionsContainer->DisabledPath);
 
             std::string msg = "Dumped disabled"_custom_ext;
             log::debug("{}", msg);
@@ -215,46 +210,63 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         //Set up PresetMap with all items (enabled and disabled) and set their state
         int index = 0;
         {
-            
-            matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
-            AdvancedFollowPreset preset = PresetFromJson(json);
-            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
-            if (!IsInVector(disabledNames, preset.name)) {
-                OptionsContainer->PresetMap[index]->enabled = true;
+            //Disable error logging (will probably clog console)
+            matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext, false);
+            if (!json["name"].asString().unwrapOrDefault().empty()) {
+                AdvancedFollowPreset preset = PresetFromJson(json);
+                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Missile"_custom_ext);
+                if (!IsInVector(disabledNames, preset.name)) {
+                    OptionsContainer->PresetMap[index]->enabled = true;
+                }
+                index++;
             }
-            index++;
+            
            
         }
             
 
         {
-            matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
-            
-            AdvancedFollowPreset preset = PresetFromJson(json);
-            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
-            if (!IsInVector(disabledNames, preset.name)) {
-                OptionsContainer->PresetMap[index]->enabled = true;
+            //Disable error logging (will probably clog console)
+            matjson::Value json = FileToJson(OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext, false);
+            if (!json["name"].asString().unwrapOrDefault().empty()) {
+                AdvancedFollowPreset preset = PresetFromJson(json);
+                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, OptionsContainer->TemplatesPath / "Homing Ball"_custom_ext);
+                if (!IsInVector(disabledNames, preset.name)) {
+                    OptionsContainer->PresetMap[index]->enabled = true;
+                }
+                index++;
             }
-            index++;
             
             
             
         }
-        
+        int count = 0;
         for (const auto& entry : std::filesystem::directory_iterator(OptionsContainer->PresetsPath)) {
             if (!entry.is_regular_file()) continue;
             if (entry.path().extension() != OptionsContainer->CustomExt) continue;
 
            
             matjson::Value json = FileToJson(entry.path());
-            AdvancedFollowPreset preset = PresetFromJson(json);
-            OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, entry.path());
-            if (!IsInVector(disabledNames, preset.name)) {
-                OptionsContainer->PresetMap[index]->enabled = true;
+            if (!json["name"].asString().unwrapOrDefault().empty()) {
+                AdvancedFollowPreset preset = PresetFromJson(json);
+                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, entry.path());
+                if (!IsInVector(disabledNames, preset.name)) {
+                    OptionsContainer->PresetMap[index]->enabled = true;
+                }
+                index++;
+            } else {
+                count++;
             }
-            index++;
         
         }
+        if (Mod::get()->getSettingValue<bool>("display-notifs")) {
+            if (count > 1) 
+                Notification::create(fmt::format("{} Presets had errors loading. Check the console for details.", count), CCSprite::createWithSpriteFrameName("geode.loader/info-warning.png"))->show();
+            else if (count == 1)  
+                Notification::create("1 Preset had errors loading. Check the console for details.", CCSprite::createWithSpriteFrameName("geode.loader/info-warning.png"))->show();
+        }
+        
+        
         
         
         if (isReload) fields->m_ScrollingButtonMenu->removeAllChildrenWithCleanup(true);
@@ -351,6 +363,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                 m_fields->m_ScrollingButtonMenu->setTouchEnabled(true);
                 matjson::Value json = PresetToJson(preset);
                 JsonToFile(json, OptionsContainer->PresetsPath / (preset.name + OptionsContainer->CustomExt));
+                if (Mod::get()->getSettingValue<bool>("display-notifs"))
+                    Notification::create(fmt::format("Created preset {}.", preset.name), CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"))->show();
                 log::debug("Saved new preset {}.", utils::string::pathToString(OptionsContainer->PresetsPath / (preset.name + OptionsContainer->CustomExt)));
                 LoadPresets();
 
@@ -500,7 +514,13 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                             FileToTrash(bundle->PresetPath);
                         }
                     }
-                    Notification::create(fmt::format("Deleted {} presets.", binSize), CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"))->show();
+                    if (Mod::get()->getSettingValue<bool>("display-notifs")) {
+                        if (binSize > 1)
+                            Notification::create(fmt::format("Deleted {} presets.", binSize), CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"))->show();
+                        else if (binSize == 1)
+                            Notification::create("Deleted 1 preset.", CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"))->show();
+                    }
+                        
                     UpdateTopText("Select Preset");
                     m_fields->m_selectionMode = SelectionMode::SELECT_NORMAL;
 
@@ -598,15 +618,21 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         switch (m_fields->m_selectionMode) {
             case SelectionMode::SELECT_NORMAL:
                 if (Mod::get()->getSettingValue<bool>("confirm-use")) {
-                   createQuickPopup("Select Preset", fmt::format("Do you want to use the preset {}?", OptionsContainer->PresetMap[sender->getTag()]->preset.name), "no", "yes", [this, sender](auto, bool btn2) {
+                    auto presetName = OptionsContainer->PresetMap[sender->getTag()]->preset.name;
+                    createQuickPopup("Select Preset", fmt::format("Do you want to use the preset {}?", presetName), "no", "yes", [this, sender, presetName](auto, bool btn2) {
                         if (btn2) {
                             SelectPremadeLayer::onSelectPremade(sender);
+                            if (Mod::get()->getSettingValue<bool>("display-notifs"))
+                                Notification::create(fmt::format("Selected preset {}.", presetName), CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"))->show();
                             
                         }
                     }); 
                 } else {
                     SelectPremadeLayer::onSelectPremade(sender);
+                    if (Mod::get()->getSettingValue<bool>("display-notifs"))
+                        Notification::create(fmt::format("Selected preset {}.", OptionsContainer->PresetMap[sender->getTag()]->preset.name), CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"))->show();
                 }
+                
                 
                 break;
 

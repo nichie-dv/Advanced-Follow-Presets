@@ -34,12 +34,12 @@ matjson::Value PresetToJson(const AdvancedFollowPreset& preset) {
 //Parses given json into an advanced follow preset and returns it
 AdvancedFollowPreset PresetFromJson(const matjson::Value& json) {
     AdvancedFollowPreset preset{}; 
-    preset.tabColor = static_cast<int>(json["highlightColor"].asInt().unwrap());
-    preset.name = static_cast<std::string>(json["name"].asString().unwrap());
-    preset.description = static_cast<std::string>(json["description"].asString().unwrap());
+    preset.tabColor = json["highlightColor"].asInt().unwrapOr(0);
+    preset.name = json["name"].asString().unwrapOr("unknown");
+    preset.description = json["description"].asString().unwrapOr("");
 
     for (auto& map : memberMappings) {
-        if (json[map.name].isNull()) continue;
+        if (!json.contains(map.name)) continue;
 
         if (map.intMember) {
             auto res = json[map.name].asInt();
@@ -73,7 +73,20 @@ matjson::Value FileToJson(const filesystem::path& filepath) {
         log::warn("Failed to read file at {}: {}", utils::string::pathToString(filepath), res.err());
         return matjson::Value();
     }
-    return res.unwrap();
+    return res.unwrapOrDefault();
+    
+}
+
+//Parses json from path and returns it
+//allows for disabling error logging (useful for known errors)
+matjson::Value FileToJson(const filesystem::path& filepath, bool logErrors) {
+    auto res = utils::file::readJson(filepath);
+    if (res.isErr()) {
+        if (logErrors)
+            log::warn("Failed to read file at {}: {}", utils::string::pathToString(filepath), res.err());
+        return matjson::Value();
+    }
+    return res.unwrapOrDefault();
     
 }
 
@@ -118,24 +131,45 @@ void CreatePath(const filesystem::path& filepath) {
 
 
 //Unwrap presets into a vector of keys and values (also vectors)
-pair<vector<int>, vector<float>> UnwrapPreset(AdvancedFollowPreset& preset) {
-    vector<int> presetIDs;
-    vector<float> presetValues;
+std::pair<std::vector<KVPair>, int> UnwrapPreset(AdvancedFollowPreset& preset) {
+    vector<KVPair> kvpair;
+    int mode = 0;
+
+    kvpair.reserve(std::size(memberMappings));
 
     for (const auto& entry : memberMappings) {
+        KVPair kventry;
+        kventry.id = entry.propID;
 
-        presetIDs.push_back(entry.propID);
+        if (entry.intMember)
+            kventry.value = static_cast<float>(preset.*(entry.intMember));
 
-        if (entry.intMember) presetValues.push_back(static_cast<float>(preset.*(entry.intMember)));
-        else if (entry.floatMember) presetValues.push_back(preset.*(entry.floatMember));
-        else if (entry.boolMember) presetValues.push_back(preset.*(entry.boolMember) ? 1.0f : 0.0f);
-        else if (entry.enumAFMMember) presetValues.push_back(static_cast<float>(static_cast<int>(preset.*(entry.enumAFMMember))));
-        else if (entry.enumAFP2Member) presetValues.push_back(static_cast<float>(static_cast<int>(preset.*(entry.enumAFP2Member))));
-        else log::warn("unknown property {}", entry.propID);
+        else if (entry.floatMember)
+            kventry.value = preset.*(entry.floatMember);
+            
+
+        else if (entry.boolMember)
+            kventry.value = preset.*(entry.boolMember) ? 1.0f : 0.0f;
+
+        else if (entry.enumAFMMember)
+            kventry.value = static_cast<float>(static_cast<int>(preset.*(entry.enumAFMMember)));
+
+        else if (entry.enumAFP2Member) {
+            
+            int v = static_cast<int>(preset.*(entry.enumAFP2Member));
+            kventry.value = static_cast<float>(v);
+            mode = v;
+        }
+
+        else {
+            log::warn("unknown property {}", entry.propID);
+            kventry.value = 0.0f;
+        }
+
+        kvpair.push_back(kventry);
     }
 
-    return {presetIDs, presetValues};
-
+    return {kvpair, mode};
 }
 
 //Wraps into a preset from a trigger
@@ -145,6 +179,7 @@ AdvancedFollowPreset WrapPreset(SetupAdvFollowPopup* trigger) {
     for (const auto& entry : memberMappings) {
 
         float value = trigger->getValue(entry.propID);
+        
         if (!value) continue;
 
         if (entry.intMember) preset.*(entry.intMember) = static_cast<int>(value);

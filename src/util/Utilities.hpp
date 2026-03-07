@@ -207,15 +207,21 @@ matjson::Value PresetToJson(const AdvancedFollowPreset& preset);
 AdvancedFollowPreset PresetFromJson(const matjson::Value& json);
 
 matjson::Value FileToJson(const std::filesystem::path& filepath);
+matjson::Value FileToJson(const std::filesystem::path& filepath, bool logErrors);
 
 void JsonToFile(const matjson::Value& json, const std::filesystem::path& filepath);
+
 void FileToTrash(const std::filesystem::path& filepath);
 
 bool DoesFileOrPathExist(const std::filesystem::path& filepath);
 void CreatePath(const std::filesystem::path& filepath);
 
+struct KVPair {
+    int id;
+    float value;
+};
 
-std::pair<std::vector<int>, std::vector<float>> UnwrapPreset(AdvancedFollowPreset& preset);
+std::pair<std::vector<KVPair>, int> UnwrapPreset(AdvancedFollowPreset& preset);
 AdvancedFollowPreset WrapPreset(SetupAdvFollowPopup* trigger);
 
 //Vector type and item type must match

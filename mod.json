@@ -8,7 +8,7 @@
 	},
 	"id": "nichie.advanced-follow-presets",
 	"name": "Advanced Follow Presets",
-	"version": "v0.3.7",
+	"version": "v0.4.0",
 	"developer": "nichie",
 	"links": {
 		"homepage": "https://nichie.dev",
@@ -55,6 +55,12 @@
 			"type": "bool",
 			"name": "Confirm use popup",
 			"description": "Displays a popup before using a preset warning the user.",
+			"default": true
+		},
+		"display-notifs": {
+			"type": "bool",
+			"name": "Show notifications",
+			"description": "Display notifications when you use/delete presets. Also enables/disables warning notification when a preset fails to load.",
 			"default": true
 		},
 		"file-extension": {

@@ -1,3 +1,9 @@
+# 0.4.0
+- JSON safety checks
+- Unwrap error handling
+- Fixed follow group id not updating
+- Added annoying notifications when you do anything (can be toggled off)
+
 # 0.3.7
 - Android compatability update
 
