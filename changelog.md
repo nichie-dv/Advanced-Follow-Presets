@@ -1,7 +1,3 @@
-# 0.4.1
-- UI visuals cleanup (disable button turns gray when in use)
-- Added Scrollbar
-
 # 0.4.0
 - JSON safety checks
 - Unwrap error handling

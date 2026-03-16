@@ -221,6 +221,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                 index++;
             }
             
+           
         }
             
 
@@ -234,7 +235,9 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                     OptionsContainer->PresetMap[index]->enabled = true;
                 }
                 index++;
-            }   
+            }
+            
+            
             
         }
         int count = 0;
@@ -262,7 +265,9 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             else if (count == 1)  
                 Notification::create("1 Preset had errors loading. Check the console for details.", CCSprite::createWithSpriteFrameName("geode.loader/info-warning.png"))->show();
         }
-            
+        
+        
+        
         
         if (isReload) fields->m_ScrollingButtonMenu->removeAllChildrenWithCleanup(true);
         
@@ -287,11 +292,18 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             if ((bundle->enabled && fields->m_selectionMode == SelectionMode::SELECT_NORMAL) || (bundle->enabled && fields->m_selectionMode == SelectionMode::SELECT_DELETE) || fields->m_selectionMode == SelectionMode::SELECT_GRAB) {
                 fields->m_ScrollingButtonMenu->addChild(button);
             }
+                
+            
+            
+            
 
         }
 
 
         auto contentLayer = fields->m_ScrollingButtonMenu->getParent();
+
+
+
 
         //Calculate content height for scroll content layer
         float buttonWidth = 45;
@@ -532,8 +544,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         if (m_fields->m_selectionMode == SelectionMode::SELECT_NORMAL) { 
             UpdateTopText("Toggle Presets");
             m_fields->m_selectionMode = SelectionMode::SELECT_GRAB;
-            static_cast<CCSprite*>(m_fields->m_disableButton->getChildByIndex(0)->getChildByIndex(0))->setColor(DisabledColor);
-            static_cast<CCSprite*>(m_fields->m_disableButton->getChildByIndex(0)->getChildByIndex(1))->setColor(DisabledColor);
+
 
 
             
@@ -555,8 +566,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
             JsonToFile(disabledJson, OptionsContainer->DisabledPath);
             log::debug("saved {} disabled presets to {}", disabledNames.size(), OptionsContainer->DisabledPath);
-            static_cast<CCSprite*>(m_fields->m_disableButton->getChildByIndex(0)->getChildByIndex(0))->setColor(EnabledColor);
-            static_cast<CCSprite*>(m_fields->m_disableButton->getChildByIndex(0)->getChildByIndex(1))->setColor(EnabledColor);
         
             //Unknown mode
         } else {
@@ -649,9 +658,17 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                 break;
         }  
     }
-    
+
+
+
+
 
     //Hooked Funcitons
+    
+
+
+
+
     bool init() {
         if (!SelectPremadeLayer::init()) return false; 
         if (!OptionsContainer) return false;
@@ -663,7 +680,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         auto popupContentLayer = this->getChildByIndex(0);
 
         //Get existing nodes
-        //Wow this was risky of me glad it worked somehow
         auto popupBgNode = static_cast<CCScale9Sprite*>(popupContentLayer->getChildByIndex(0));
         auto popupText = static_cast<CCLabelBMFont*>(popupContentLayer->getChildByIndex(1));
         auto presetButtonMenu = static_cast<CCMenu*>(popupContentLayer->getChildByIndex(2));
@@ -723,11 +739,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
         //Create a new scroll layer for preset buttons
         auto presetScrollLayer = ScrollLayer::create({width - 30, height - 80});
-        auto presetScrollBar = Scrollbar::create(presetScrollLayer);
         presetScrollLayer->setID("preset-scroll-layer"_spr);
-        presetScrollBar->setID("preset-scroll-bar"_spr);
         presetScrollLayer->ignoreAnchorPointForPosition(false);
-        presetScrollBar->ignoreAnchorPointForPosition(false);
 
         //Create a BG for the scroll layer
         auto presetScrollBG = NineSlice::create("square02_001.png");
@@ -853,8 +866,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         presetButtonMenu->getChildByTag(0)->removeFromParent();
         presetButtonMenu->getChildByTag(1)->removeFromParent();
 
-        presetButtonMenu->updateLayout();
-
 
         //Setup scroll layer
         scrollingContentLayer->setLayout(AnchorLayout::create());
@@ -884,9 +895,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
         LoadPresets();
 
-        popupContentLayer->addChildAtPosition(presetScrollLayer, Anchor::Center, {-5, 7});
-        popupContentLayer->addChildAtPosition(presetScrollBar, Anchor::Center, {169.75f, 7});
-        popupContentLayer->addChildAtPosition(presetScrollBG, Anchor::Center, {-5, 7});
+        popupContentLayer->addChildAtPosition(presetScrollLayer, Anchor::Center, {0, 7});
+        popupContentLayer->addChildAtPosition(presetScrollBG, Anchor::Center, {0, 7});
         
         this->setTouchMode(kCCTouchesOneByOne);
 
