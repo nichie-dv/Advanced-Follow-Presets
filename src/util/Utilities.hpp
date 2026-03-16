@@ -35,8 +35,6 @@ struct AdvancedFollowPreset {
     std::string name;
     std::string description;
     
-
-
     int target_group;
     int follow_group;
     int priority;
@@ -216,6 +214,7 @@ void FileToTrash(const std::filesystem::path& filepath);
 bool DoesFileOrPathExist(const std::filesystem::path& filepath);
 void CreatePath(const std::filesystem::path& filepath);
 
+
 struct KVPair {
     int id;
     float value;
@@ -246,4 +245,3 @@ bool IsInPresetMap(const MapType& map, const std::string& name)
     }
     return false;
 }
-
