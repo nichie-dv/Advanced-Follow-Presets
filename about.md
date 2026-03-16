@@ -16,4 +16,5 @@ This mod also comes with customizable folder paths, a template (for scripting pe
 
 If you delete the base robtop presets, fret not, for they and the blank template are regenerated on mod load when they are not found.
 
+Extra Settings can be found in the mods settings menu.
 

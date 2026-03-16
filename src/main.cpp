@@ -111,7 +111,6 @@ class $modify(MySetupAdvFollowPopup, SetupAdvFollowPopup) {
 };
 
 
-
 #include <Geode/modify/SelectPremadeLayer.hpp>
 class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     struct Fields {
@@ -266,9 +265,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                 Notification::create("1 Preset had errors loading. Check the console for details.", CCSprite::createWithSpriteFrameName("geode.loader/info-warning.png"))->show();
         }
         
-        
-        
-        
+         
         if (isReload) fields->m_ScrollingButtonMenu->removeAllChildrenWithCleanup(true);
         
         for (const auto& entry : OptionsContainer->PresetMap) {
@@ -292,10 +289,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             if ((bundle->enabled && fields->m_selectionMode == SelectionMode::SELECT_NORMAL) || (bundle->enabled && fields->m_selectionMode == SelectionMode::SELECT_DELETE) || fields->m_selectionMode == SelectionMode::SELECT_GRAB) {
                 fields->m_ScrollingButtonMenu->addChild(button);
             }
-                
-            
-            
-            
 
         }
 
@@ -664,15 +657,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     }
 
 
-
-
-
     //Hooked Funcitons
     
-
-
-
-
     bool init() {
         if (!SelectPremadeLayer::init()) return false; 
         if (!OptionsContainer) return false;
