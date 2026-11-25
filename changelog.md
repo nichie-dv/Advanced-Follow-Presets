@@ -1,3 +1,5 @@
+# 0.5.0
+- Geode v6 update
 
 # 0.4.1
 - UI visuals cleanup (disable button turns gray when in use)
