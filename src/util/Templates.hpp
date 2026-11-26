@@ -1,5 +1,7 @@
 #pragma once
+
 #include <Geode/Geode.hpp>
+
 #include <string>
 
 #include "Utilities.hpp"
@@ -10,7 +12,6 @@ using namespace std;
 
 //Save robtop presets + template
 inline void CreateTemplates() {
-
     //hardcoded to prevent accidental deletion
 
     AdvancedFollowPreset robtopHomingMissile = {};
@@ -52,8 +53,8 @@ inline void CreateTemplates() {
     AdvancedFollowPreset templatePreset = {};
     templatePreset.name = "Template";
     
-    JsonToFile(PresetToJson(robtopHomingMissile), Mod::get()->getSettingValue<filesystem::path>("template-path") / "Homing Missile"_custom_ext);
-    JsonToFile(PresetToJson(robtopHomingBall), Mod::get()->getSettingValue<filesystem::path>("template-path") / "Homing Ball"_custom_ext);
-    JsonToFile(PresetToJson(templatePreset), Mod::get()->getSettingValue<filesystem::path>("template-path") / "Template"_custom_ext);
+    JsonToFile(PresetToJson(robtopHomingMissile), Mod::get()->getSettingValue<asp::fs::Path>("template-path") / "Homing Missile"_custom_ext);
+    JsonToFile(PresetToJson(robtopHomingBall), Mod::get()->getSettingValue<asp::fs::Path>("template-path") / "Homing Ball"_custom_ext);
+    JsonToFile(PresetToJson(templatePreset), Mod::get()->getSettingValue<asp::fs::Path>("template-path") / "Template"_custom_ext);
 
 };

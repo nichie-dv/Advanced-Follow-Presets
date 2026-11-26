@@ -1,5 +1,6 @@
 #include <Geode/Geode.hpp>
 #include <Geode/utils/string.hpp>
+
 #include <vector>
 #include <iostream>
 
@@ -22,18 +23,18 @@ enum SelectionMode  {
 
 $on_mod(Loaded) {
     //Paths
-    if (!DoesFileOrPathExist(Mod::get()->getSettingValue<std::filesystem::path>("template-path"))) {
-        CreatePath(Mod::get()->getSettingValue<std::filesystem::path>("template-path"));
+    if (!DoesFileOrPathExist(Mod::get()->getSettingValue<asp::fs::Path>("template-path"))) {
+        CreatePath(Mod::get()->getSettingValue<asp::fs::Path>("template-path"));
     }
-    if (!DoesFileOrPathExist(Mod::get()->getSettingValue<std::filesystem::path>("presets-path"))) {
-        CreatePath(Mod::get()->getSettingValue<std::filesystem::path>("presets-path"));
+    if (!DoesFileOrPathExist(Mod::get()->getSettingValue<asp::fs::Path>("presets-path"))) {
+        CreatePath(Mod::get()->getSettingValue<asp::fs::Path>("presets-path"));
     }
 
-    if (!DoesFileOrPathExist(Mod::get()->getSettingValue<std::filesystem::path>("template-path") / "Homing Missile"_custom_ext) ||
-        !DoesFileOrPathExist(Mod::get()->getSettingValue<std::filesystem::path>("template-path") / "Homing Ball"_custom_ext) ||
-        !DoesFileOrPathExist(Mod::get()->getSettingValue<std::filesystem::path>("template-path") / "Template"_custom_ext)) {
+    if (!DoesFileOrPathExist(Mod::get()->getSettingValue<asp::fs::Path>("template-path") / "Homing Missile"_custom_ext) ||
+        !DoesFileOrPathExist(Mod::get()->getSettingValue<asp::fs::Path>("template-path") / "Homing Ball"_custom_ext) ||
+        !DoesFileOrPathExist(Mod::get()->getSettingValue<asp::fs::Path>("template-path") / "Template"_custom_ext)) {
         
-        log::debug("creating new templates at {}", utils::string::pathToString(Mod::get()->getSettingValue<std::filesystem::path>("template-path")));
+        log::debug("creating new templates at {}", Mod::get()->getSettingValue<asp::fs::Path>("template-path").string());
         CreateTemplates();
     }
 
@@ -44,7 +45,7 @@ $on_mod(Loaded) {
         disabledJson["disabled"] = std::vector<std::string>{};
         auto path = Mod::get()->getSaveDir() / "disabled"_custom_ext;
         JsonToFile(disabledJson, path);
-        log::debug("created disabled list at {}", utils::string::pathToString(Mod::get()->getSaveDir() / "disabled"_custom_ext));
+        log::debug("created disabled list at {}", (Mod::get()->getSaveDir() / "disabled"_custom_ext).string());
     }
 }
 
@@ -126,6 +127,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         CCLabelBMFont* m_topText = nullptr;
 
         CCMenu* m_ScrollingButtonMenu = nullptr;
+        ScrollLayer* m_presetScrollLayer = nullptr;
         CCMenu* m_PresetButtonMenu = nullptr;
         CCMenuItemSpriteExtra* m_disableButton;
     };
@@ -240,15 +242,23 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             
         }
         int count = 0;
-        for (const auto& entry : std::filesystem::directory_iterator(OptionsContainer->PresetsPath)) {
-            if (!entry.is_regular_file()) continue;
-            if (entry.path().extension() != OptionsContainer->CustomExt) continue;
+        auto dirIter = asp::fs::iterDir(OptionsContainer->PresetsPath);
+        if (dirIter.isErr()) {
+            log::warn("Failed to read presets folder {}: {}", OptionsContainer->PresetsPath.string(), dirIter.unwrapErr());
+        }
+        while (dirIter.isOk()) {
+            auto next = dirIter.unwrap().next();
+            if (!next) break;
+            if (next->isErr()) continue;
+            auto entry = next->unwrap();
 
-           
-            matjson::Value json = FileToJson(entry.path());
+            if (!entry.isFile()) continue;
+            if (entry.path.extension().value_or("") != std::string_view(OptionsContainer->CustomExt).substr(1)) continue;
+
+            matjson::Value json = FileToJson(entry.path);
             if (!json["name"].asString().unwrapOrDefault().empty()) {
                 AdvancedFollowPreset preset = PresetFromJson(json);
-                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, entry.path());
+                OptionsContainer->PresetMap[index] = new PresetItemBundle(preset, nullptr, nullptr, false, false, entry.path);
                 if (!IsInVector(disabledNames, preset.name)) {
                     OptionsContainer->PresetMap[index]->enabled = true;
                 }
@@ -259,10 +269,10 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         
         }
         if (Mod::get()->getSettingValue<bool>("display-notifs")) {
-            if (count > 1) 
-                Notification::create(fmt::format("{} Presets had errors loading. Check the console for details.", count), CCSprite::createWithSpriteFrameName("geode.loader/info-warning.png"))->show();
-            else if (count == 1)  
-                Notification::create("1 Preset had errors loading. Check the console for details.", CCSprite::createWithSpriteFrameName("geode.loader/info-warning.png"))->show();
+            Notification::create(
+                fmt::format("{} Preset{} had errors loading. Check the console for details.", count, count > 1 ? "s" : ""),
+                CCSprite::createWithSpriteFrameName("geode.loader/info-warning.png")
+            )->show();
         }
         
          
@@ -295,9 +305,6 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
         auto contentLayer = fields->m_ScrollingButtonMenu->getParent();
 
-
-
-
         //Calculate content height for scroll content layer
         float buttonWidth = 45;
         float containerWidth = contentLayer->getContentWidth();
@@ -305,7 +312,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         
         int buttonsPerRow = containerWidth / (buttonWidth + 6);
         int totalButtons = fields->m_ScrollingButtonMenu->getChildrenCount();
-        int rows = (totalButtons + buttonsPerRow - 1) / buttonsPerRow;
+        //int rows = (totalButtons + buttonsPerRow - 1) / buttonsPerRow;
 
         contentLayer->updateLayout();
         fields->m_ScrollingButtonMenu->updateLayout();
@@ -313,7 +320,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         contentLayer->setContentHeight(fields->m_ScrollingButtonMenu->getContentHeight() + 6);
         contentLayer->updateLayout();
 
-        static_cast<ScrollLayer*>(contentLayer->getParent())->scrollToTop();
+        //content layer is now inside a clipping node
+        if (fields->m_presetScrollLayer) fields->m_presetScrollLayer->scrollToTop();
 
         this->updateLayout();
         fields->m_PresetButtonMenu->updateLayout(); 
@@ -358,7 +366,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                 JsonToFile(json, OptionsContainer->PresetsPath / (preset.name + OptionsContainer->CustomExt));
                 if (Mod::get()->getSettingValue<bool>("display-notifs"))
                     Notification::create(fmt::format("Created preset {}.", preset.name), CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"))->show();
-                log::debug("Saved new preset {}.", utils::string::pathToString(OptionsContainer->PresetsPath / (preset.name + OptionsContainer->CustomExt)));
+                log::debug("Saved new preset {}.", (OptionsContainer->PresetsPath / (preset.name + OptionsContainer->CustomExt)).string());
                 LoadPresets();
 
             } else {
@@ -560,7 +568,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
             disabledJson["disabled"] = disabledNames;
 
             JsonToFile(disabledJson, OptionsContainer->DisabledPath);
-            log::debug("saved {} disabled presets to {}", disabledNames.size(), OptionsContainer->DisabledPath);
+            log::debug("saved {} disabled presets to {}", disabledNames.size(), OptionsContainer->DisabledPath.string());
             static_cast<CCSprite*>(m_fields->m_disableButton->getChildByIndex(0)->getChildByIndex(0))->setColor(EnabledColor);
             static_cast<CCSprite*>(m_fields->m_disableButton->getChildByIndex(0)->getChildByIndex(1))->setColor(EnabledColor);
         
@@ -608,6 +616,14 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         LoadPresets();
     }
 
+    //Replacement for SelectPremadeLayer::onSelectPremade.
+    //The 2.2091 Windows binding for it points at the wrong address (0x4517c0, shared with
+    //an unrelated onToggleUpload) and crashes, so call the delegate and close directly.
+    void ApplyPremade(CCObject* sender) {
+        if (m_delegate) m_delegate->selectPremadeClosed(this, sender->getTag());
+        this->onClose(nullptr);
+    }
+
     //Preset button presses
     //Renamed to prevent looping (Internal)
     void onSelectPremadeInt(CCObject* sender) {
@@ -618,14 +634,14 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                     auto presetName = OptionsContainer->PresetMap[sender->getTag()]->preset.name;
                     createQuickPopup("Select Preset", fmt::format("Do you want to use the preset {}?", presetName), "no", "yes", [this, sender, presetName](auto, bool btn2) {
                         if (btn2) {
-                            SelectPremadeLayer::onSelectPremade(sender);
+                            ApplyPremade(sender);
                             if (Mod::get()->getSettingValue<bool>("display-notifs"))
                                 Notification::create(fmt::format("Selected preset {}.", presetName), CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"))->show();
                             
                         }
                     }); 
                 } else {
-                    SelectPremadeLayer::onSelectPremade(sender);
+                    ApplyPremade(sender);
                     if (Mod::get()->getSettingValue<bool>("display-notifs"))
                         Notification::create(fmt::format("Selected preset {}.", OptionsContainer->PresetMap[sender->getTag()]->preset.name), CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"))->show();
                 }
@@ -743,7 +759,9 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         presetScrollBG->setOpacity(100);
 
         
-        auto scrollingContentLayer = presetScrollLayer->getChildByID("content-layer");
+        //v6: content layer is nested in a clipping node, so getChildByID can't find it
+        auto scrollingContentLayer = presetScrollLayer->m_contentLayer;
+        fields->m_presetScrollLayer = presetScrollLayer;
 
 
         //Create a new CCMenu for preset buttons on the scroll layer

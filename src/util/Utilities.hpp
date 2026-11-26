@@ -1,6 +1,9 @@
 #pragma once
+
 #include <Geode/Geode.hpp>
+
 #include <string>
+#include <asp/fs.hpp>
 
 
 
@@ -206,15 +209,15 @@ inline const char* TabIconForIndex(int index) {
 matjson::Value PresetToJson(const AdvancedFollowPreset& preset);
 AdvancedFollowPreset PresetFromJson(const matjson::Value& json);
 
-matjson::Value FileToJson(const std::filesystem::path& filepath);
-matjson::Value FileToJson(const std::filesystem::path& filepath, bool logErrors);
+matjson::Value FileToJson(const asp::fs::Path& filepath);
+matjson::Value FileToJson(const asp::fs::Path& filepath, bool logErrors);
 
-void JsonToFile(const matjson::Value& json, const std::filesystem::path& filepath);
+void JsonToFile(const matjson::Value& json, const asp::fs::Path& filepath);
 
-void FileToTrash(const std::filesystem::path& filepath);
+void FileToTrash(const asp::fs::Path& filepath);
 
-bool DoesFileOrPathExist(const std::filesystem::path& filepath);
-void CreatePath(const std::filesystem::path& filepath);
+bool DoesFileOrPathExist(const asp::fs::Path& filepath);
+void CreatePath(const asp::fs::Path& filepath);
 
 struct KVPair {
     int id;

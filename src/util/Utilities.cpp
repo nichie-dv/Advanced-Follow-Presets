@@ -1,7 +1,8 @@
 #include "Utilities.hpp"
+
 #include <Geode/Geode.hpp>
+
 #include <string>
-#include <filesystem>
 
 using namespace geode::prelude;
 using namespace std; // :D
@@ -67,10 +68,10 @@ AdvancedFollowPreset PresetFromJson(const matjson::Value& json) {
 }
 
 //Parses json from path and returns it
-matjson::Value FileToJson(const filesystem::path& filepath) {
+matjson::Value FileToJson(const asp::fs::Path& filepath) {
     auto res = utils::file::readJson(filepath);
     if (res.isErr()) {
-        log::warn("Failed to read file at {}: {}", utils::string::pathToString(filepath), res.err());
+        log::warn("Failed to read file at {}: {}", filepath.string(), res.err());
         return matjson::Value();
     }
     return res.unwrapOrDefault();
@@ -79,11 +80,11 @@ matjson::Value FileToJson(const filesystem::path& filepath) {
 
 //Parses json from path and returns it
 //allows for disabling error logging (useful for known errors)
-matjson::Value FileToJson(const filesystem::path& filepath, bool logErrors) {
+matjson::Value FileToJson(const asp::fs::Path& filepath, bool logErrors) {
     auto res = utils::file::readJson(filepath);
     if (res.isErr()) {
         if (logErrors)
-            log::warn("Failed to read file at {}: {}", utils::string::pathToString(filepath), res.err());
+            log::warn("Failed to read file at {}: {}", filepath.string(), res.err());
         return matjson::Value();
     }
     return res.unwrapOrDefault();
@@ -91,42 +92,40 @@ matjson::Value FileToJson(const filesystem::path& filepath, bool logErrors) {
 }
 
 //Writes given json to given filepath
-void JsonToFile(const matjson::Value& json, const filesystem::path& filepath) {
+void JsonToFile(const matjson::Value& json, const asp::fs::Path& filepath) {
     if (json.isNull()) {
-        log::warn("Json is null ({}).", utils::string::pathToString(filepath));
+        log::warn("Json is null ({}).", filepath.string());
         return;
     }
 
     auto res = utils::file::writeToJson(filepath, json);
     if (res.isErr())
-        log::warn("Failed writing json to {}: {}", utils::string::pathToString(filepath), res.err());
+        log::warn("Failed writing json to {}: {}", filepath.string(), res.err());
     
 }
 
 //Deletes json file with given filepath (maybe dangerous)
-void FileToTrash(const filesystem::path& filepath) {
+void FileToTrash(const asp::fs::Path& filepath) {
     if (!DoesFileOrPathExist(filepath)) {
-        log::warn("Path does not exist: {}", utils::string::pathToString(filepath));
+        log::warn("Path does not exist: {}", filepath.string());
         return;
     }
 
-    std::error_code code;
-    filesystem::remove(filepath, code);
-    
-    if (code)
-        log::warn("Failed to delete file at path {}: {}", utils::string::pathToString(filepath), code.message());
+    auto res = asp::fs::remove(filepath);
+    if (res.isErr())
+        log::warn("Failed to delete file at path {}: {}", filepath.string(), res.unwrapErr());
 }
 
 //I'm not really sure why i made this but it looks nicer (probably not)
-bool DoesFileOrPathExist(const filesystem::path& filepath) {
-    return filesystem::exists(filepath);
+bool DoesFileOrPathExist(const asp::fs::Path& filepath) {
+    return filepath.exists();
 }
 
 //Wrapper for create path (cleaner)
-void CreatePath(const filesystem::path& filepath) {
+void CreatePath(const asp::fs::Path& filepath) {
     auto res = utils::file::createDirectory(filepath);
     if (res.isErr())
-        log::warn("Error with {}: {}", utils::string::pathToString(filepath), res.err());
+        log::warn("Error with {}: {}", filepath.string(), res.err());
 }
 
 

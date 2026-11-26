@@ -1,12 +1,12 @@
 #include "PresetPopup.hpp"
-#include <Geode/Geode.hpp>
 
+#include <Geode/Geode.hpp>
 
 
 bool PresetPopup::init() {
     if (!CCLayer::init()) return false;
     
-    CCTouchDispatcher::get()->registerForcePrio(this, 2);
+    CCTouchDispatcher::get()->registerForcePrio(this, 2, 0);
     auto winSize = CCDirector::get()->getWinSize();
     this->setID("create-preset-alert"_spr);  
     
