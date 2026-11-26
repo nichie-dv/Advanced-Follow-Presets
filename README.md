@@ -1,3 +1,8 @@
+![Mod Version](https://api.geode-sdk.org/v1/mods/nichie.advanced-follow-presets/status_badge?stat=version)
+![Downloads](https://api.geode-sdk.org/v1/mods/nichie.advanced-follow-presets/status_badge?stat=downloads)
+![GD Version](https://api.geode-sdk.org/v1/mods/nichie.advanced-follow-presets/status_badge?stat=gd_version)
+![Geode Version](https://api.geode-sdk.org/v1/mods/nichie.advanced-follow-presets/status_badge?stat=geode_version)
+
 # Advanced Follow Presets
 Tired of having to redo the same advanced follow triggers over and over? Premade settings just not doing it for you? Well look no further.
 This mod is an overhaul for advanced follow premade settings.
