@@ -89,48 +89,59 @@ class $modify(MySetupAdvFollowPopup, SetupAdvFollowPopup) {
 
             auto toggleObj = this->m_valueToggles->objectForKey(propID);
 
+            //updateValueControls/updateValue/updateMode have no iOS addresses in the 2.2091 bindings
+#ifndef GEODE_IS_IOS
             if (!toggleObj)
                 this->updateValueControls(propID, value);
             else
+#endif
                 this->valueDidChange(propID, value);
 
             this->valueChanged(propID, value);
+#ifndef GEODE_IS_IOS
             this->updateValue(propID, value);
+#endif
         }
 
         //Update follow checkboxes
+#ifndef GEODE_IS_IOS
         this->updateValueControls(138, preset.follow_p1 ? 1.0f : 0.0f);
         this->updateValueControls(200, preset.follow_p2 ? 1.0f : 0.0f);
         this->updateValueControls(201, preset.follow_c ? 1.0f : 0.0f);
+#endif
 
         //Update follow gid last because the previous 3 will overwrite this one even if they're = 0
         this->valueChanged(71, preset.follow_group);
 
+#ifndef GEODE_IS_IOS
         this->updateMode(mode);
+#endif
     }
 
 };
 
 
+struct PremadeFields {
+    int m_selectionMode = SelectionMode::SELECT_NORMAL;
+
+    int m_tabColorSelection = 0;
+    TextInput* m_nameInput = nullptr;
+    TextInput* m_descInput = nullptr;
+
+    PresetPopup* m_createPopup = nullptr;
+
+
+    CCLabelBMFont* m_topText = nullptr;
+
+    CCMenu* m_ScrollingButtonMenu = nullptr;
+    ScrollLayer* m_presetScrollLayer = nullptr;
+    CCMenu* m_PresetButtonMenu = nullptr;
+    CCMenuItemSpriteExtra* m_disableButton = nullptr;
+};
+inline PremadeFields s_fields;
+
 #include <Geode/modify/SelectPremadeLayer.hpp>
 class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
-    struct Fields {
-        int m_selectionMode = SelectionMode::SELECT_NORMAL;
-
-        int m_tabColorSelection = 0;
-        TextInput* m_nameInput = nullptr;
-        TextInput* m_descInput = nullptr;
-
-        PresetPopup* m_createPopup;
-
-
-        CCLabelBMFont* m_topText = nullptr;
-
-        CCMenu* m_ScrollingButtonMenu = nullptr;
-        ScrollLayer* m_presetScrollLayer = nullptr;
-        CCMenu* m_PresetButtonMenu = nullptr;
-        CCMenuItemSpriteExtra* m_disableButton;
-    };
 
     CCMenuItemSpriteExtra* CreatePresetButton(PresetItemBundle* bundle) {
 
@@ -166,7 +177,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
     void LoadPresets() {
         if (!OptionsContainer) return;
-        auto fields = m_fields.self();
+        auto fields = &s_fields;
         bool isReload = false;
 
         //Check for reloading
@@ -332,7 +343,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
     //Small helper function to change top label
     void UpdateTopText(std::string text) {
-        m_fields->m_topText->setString(text.c_str());
+        s_fields.m_topText->setString(text.c_str());
     }
 
     //Get amount of items in bin
@@ -351,17 +362,17 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     //Settings button presses
     void onFinalizePreset(CCObject* sender) {
         //Create preset
-        if (!m_fields->m_nameInput->getString().empty()) {
-            auto name = m_fields->m_nameInput->getString();
+        if (!s_fields.m_nameInput->getString().empty()) {
+            auto name = s_fields.m_nameInput->getString();
             if (!IsInPresetMap(OptionsContainer->PresetMap, name)) {
                 //Create preset
                 AdvancedFollowPreset preset = WrapPreset(OptionsContainer->Trigger);
                 preset.name = name;
-                preset.description = m_fields->m_descInput->getString();
-                preset.tabColor = m_fields->m_tabColorSelection;
+                preset.description = s_fields.m_descInput->getString();
+                preset.tabColor = s_fields.m_tabColorSelection;
 
-                m_fields->m_createPopup->removeFromParentAndCleanup(true);
-                m_fields->m_ScrollingButtonMenu->setTouchEnabled(true);
+                s_fields.m_createPopup->removeFromParentAndCleanup(true);
+                s_fields.m_ScrollingButtonMenu->setTouchEnabled(true);
                 matjson::Value json = PresetToJson(preset);
                 JsonToFile(json, OptionsContainer->PresetsPath / (preset.name + OptionsContainer->CustomExt));
                 if (Mod::get()->getSettingValue<bool>("display-notifs"))
@@ -381,13 +392,13 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
     //Creates the creation menu popup
     void onCreateNewPreset(CCObject* sender) {
-        auto popup = PresetPopup::create(m_fields->m_ScrollingButtonMenu);
-        m_fields->m_tabColorSelection = 0;
-        m_fields->m_createPopup = popup;
+        auto popup = PresetPopup::create(s_fields.m_ScrollingButtonMenu);
+        s_fields.m_tabColorSelection = 0;
+        s_fields.m_createPopup = popup;
         auto menu = popup->getChildByID("popup-base");
 
         //Prevents clicking buttons through menu
-        m_fields->m_ScrollingButtonMenu->setTouchEnabled(false);
+        s_fields.m_ScrollingButtonMenu->setTouchEnabled(false);
 
         auto buttonMenu = CCMenu::create();
         buttonMenu->ignoreAnchorPointForPosition(false);
@@ -458,12 +469,12 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         nameInput->setFilter(" abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890-_,'");
         nameInput->setLabel("Name");
         nameInput->setID("name-input");
-        m_fields->m_nameInput = nameInput;
+        s_fields.m_nameInput = nameInput;
 
         auto descInput = TextInput::create(325, "Enter a brief description (optional)", "bigFont.fnt");
         descInput->setLabel("Description");
         descInput->setID("description-input");
-        m_fields->m_descInput = descInput;
+        s_fields.m_descInput = descInput;
         
 
         menu->addChildAtPosition(nameInput, Anchor::Top, {0, -60});
@@ -491,8 +502,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
     //Changes selected tab color
     void changeSelectedIconType(CCObject* sender) {
-        m_fields->m_tabColorSelection = sender->getTag();
-        for (auto item : m_fields->m_createPopup->iconButtons) {
+        s_fields.m_tabColorSelection = sender->getTag();
+        for (auto item : s_fields.m_createPopup->iconButtons) {
             if (item->getTag() == sender->getTag()) {
                 static_cast<CCSprite*>(item->getChildByIndex(0))->setColor(DisabledColor);
             } else {
@@ -503,7 +514,7 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
 
     //Deletes selected nodes/presets from bin
-    void deleteSelectedFromBin(CCObject* sender) {
+    void deleteSelectedFromBin(CCObject*) {
         int binSize = GetBinCount();
         if (binSize > 0) {
             createQuickPopup(fmt::format("Delete {} Presets", binSize).c_str(), "Do you want to delete the selected presets?", "no", "yes", [this, binSize](auto, bool btn2) {
@@ -523,12 +534,12 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                     }
                         
                     UpdateTopText("Select Preset");
-                    m_fields->m_selectionMode = SelectionMode::SELECT_NORMAL;
+                    s_fields.m_selectionMode = SelectionMode::SELECT_NORMAL;
 
-                    m_fields->m_PresetButtonMenu->getChildByID("delete-preset-button")->setVisible(true);
-                    m_fields->m_PresetButtonMenu->getChildByID("normal-preset-button")->setVisible(false);  
-                    m_fields->m_PresetButtonMenu->getChildByID("confirm-delete-preset-button")->setVisible(false);
-                    m_fields->m_PresetButtonMenu->updateLayout();
+                    s_fields.m_PresetButtonMenu->getChildByID("delete-preset-button")->setVisible(true);
+                    s_fields.m_PresetButtonMenu->getChildByID("normal-preset-button")->setVisible(false);  
+                    s_fields.m_PresetButtonMenu->getChildByID("confirm-delete-preset-button")->setVisible(false);
+                    s_fields.m_PresetButtonMenu->updateLayout();
                     LoadPresets();
                 }
             });
@@ -539,22 +550,22 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     }
 
     //Toggles selection mode for enabling/disabling
-    void toggleDisableSelectMode(CCObject* sender) {
+    void toggleDisableSelectMode(CCObject*) {
         
         //If in normal mode
-        if (m_fields->m_selectionMode == SelectionMode::SELECT_NORMAL) { 
+        if (s_fields.m_selectionMode == SelectionMode::SELECT_NORMAL) { 
             UpdateTopText("Toggle Presets");
-            m_fields->m_selectionMode = SelectionMode::SELECT_GRAB;
-            static_cast<CCSprite*>(m_fields->m_disableButton->getChildByIndex(0)->getChildByIndex(0))->setColor(DisabledColor);
-            static_cast<CCSprite*>(m_fields->m_disableButton->getChildByIndex(0)->getChildByIndex(1))->setColor(DisabledColor);
+            s_fields.m_selectionMode = SelectionMode::SELECT_GRAB;
+            static_cast<CCSprite*>(s_fields.m_disableButton->getChildByIndex(0)->getChildByIndex(0))->setColor(DisabledColor);
+            static_cast<CCSprite*>(s_fields.m_disableButton->getChildByIndex(0)->getChildByIndex(1))->setColor(DisabledColor);
 
 
 
             
         //If in disable mode
-        } else if (m_fields->m_selectionMode == SelectionMode::SELECT_GRAB) { 
+        } else if (s_fields.m_selectionMode == SelectionMode::SELECT_GRAB) { 
             UpdateTopText("Select Preset");
-            m_fields->m_selectionMode = SelectionMode::SELECT_NORMAL;
+            s_fields.m_selectionMode = SelectionMode::SELECT_NORMAL;
 
             
             matjson::Value disabledJson;
@@ -569,8 +580,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
             JsonToFile(disabledJson, OptionsContainer->DisabledPath);
             log::debug("saved {} disabled presets to {}", disabledNames.size(), OptionsContainer->DisabledPath.string());
-            static_cast<CCSprite*>(m_fields->m_disableButton->getChildByIndex(0)->getChildByIndex(0))->setColor(EnabledColor);
-            static_cast<CCSprite*>(m_fields->m_disableButton->getChildByIndex(0)->getChildByIndex(1))->setColor(EnabledColor);
+            static_cast<CCSprite*>(s_fields.m_disableButton->getChildByIndex(0)->getChildByIndex(0))->setColor(EnabledColor);
+            static_cast<CCSprite*>(s_fields.m_disableButton->getChildByIndex(0)->getChildByIndex(1))->setColor(EnabledColor);
         
             //Unknown mode
         } else {
@@ -583,15 +594,15 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
 
 
     //Toggle delete selection mdoe
-    void toggleDeleteSelectMode(CCObject* sender) {
-        if (m_fields->m_selectionMode != SelectionMode::SELECT_GRAB) {
+    void toggleDeleteSelectMode(CCObject*) {
+        if (s_fields.m_selectionMode != SelectionMode::SELECT_GRAB) {
             UpdateTopText("Delete Presets");
-            m_fields->m_selectionMode = SelectionMode::SELECT_DELETE;
+            s_fields.m_selectionMode = SelectionMode::SELECT_DELETE;
 
-            m_fields->m_PresetButtonMenu->getChildByID("delete-preset-button")->setVisible(false);
-            m_fields->m_PresetButtonMenu->getChildByID("normal-preset-button")->setVisible(true);
-            m_fields->m_PresetButtonMenu->getChildByID("confirm-delete-preset-button")->setVisible(true);
-            m_fields->m_PresetButtonMenu->updateLayout();
+            s_fields.m_PresetButtonMenu->getChildByID("delete-preset-button")->setVisible(false);
+            s_fields.m_PresetButtonMenu->getChildByID("normal-preset-button")->setVisible(true);
+            s_fields.m_PresetButtonMenu->getChildByID("confirm-delete-preset-button")->setVisible(true);
+            s_fields.m_PresetButtonMenu->updateLayout();
             LoadPresets();
         }
         
@@ -599,14 +610,14 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     }
 
     //Normal select mode
-    void toggleNormalSelectMode(CCObject* sender) {
+    void toggleNormalSelectMode(CCObject*) {
         UpdateTopText("Select Preset");
-        m_fields->m_selectionMode = SelectionMode::SELECT_NORMAL;
+        s_fields.m_selectionMode = SelectionMode::SELECT_NORMAL;
 
-        m_fields->m_PresetButtonMenu->getChildByID("delete-preset-button")->setVisible(true);
-        m_fields->m_PresetButtonMenu->getChildByID("normal-preset-button")->setVisible(false);  
-        m_fields->m_PresetButtonMenu->getChildByID("confirm-delete-preset-button")->setVisible(false);
-        m_fields->m_PresetButtonMenu->updateLayout();
+        s_fields.m_PresetButtonMenu->getChildByID("delete-preset-button")->setVisible(true);
+        s_fields.m_PresetButtonMenu->getChildByID("normal-preset-button")->setVisible(false);  
+        s_fields.m_PresetButtonMenu->getChildByID("confirm-delete-preset-button")->setVisible(false);
+        s_fields.m_PresetButtonMenu->updateLayout();
 
         for (const auto& [tag, bundle] : OptionsContainer->PresetMap)
         {
@@ -616,22 +627,23 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
         LoadPresets();
     }
 
-    //Replacement for SelectPremadeLayer::onSelectPremade.
-    //The 2.2091 Windows binding for it points at the wrong address (0x4517c0, shared with
-    //an unrelated onToggleUpload) and crashes, so call the delegate and close directly.
+    //Replacement for SelectPremadeLayer::onSelectPremade
     void ApplyPremade(CCObject* sender) {
         if (m_delegate) m_delegate->selectPremadeClosed(this, sender->getTag());
-        this->onClose(nullptr);
+        //onClose(nullptr) has the wrong bindings for ios/macos
+        this->keyBackClicked();
     }
 
     //Preset button presses
     //Renamed to prevent looping (Internal)
     void onSelectPremadeInt(CCObject* sender) {
         auto object = static_cast<CCMenuItemSpriteExtra*>(sender);
-        switch (m_fields->m_selectionMode) {
+        switch (s_fields.m_selectionMode) {
+
             case SelectionMode::SELECT_NORMAL:
                 if (Mod::get()->getSettingValue<bool>("confirm-use")) {
                     auto presetName = OptionsContainer->PresetMap[sender->getTag()]->preset.name;
+
                     createQuickPopup("Select Preset", fmt::format("Do you want to use the preset {}?", presetName), "no", "yes", [this, sender, presetName](auto, bool btn2) {
                         if (btn2) {
                             ApplyPremade(sender);
@@ -640,13 +652,15 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
                             
                         }
                     }); 
+
                 } else {
                     ApplyPremade(sender);
-                    if (Mod::get()->getSettingValue<bool>("display-notifs"))
+
+                    if (Mod::get()->getSettingValue<bool>("display-notifs")) {
                         Notification::create(fmt::format("Selected preset {}.", OptionsContainer->PresetMap[sender->getTag()]->preset.name), CCSprite::createWithSpriteFrameName("GJ_infoIcon_001.png"))->show();
+                    }
+                        
                 }
-                
-                
                 break;
 
             case SelectionMode::SELECT_DELETE: 
@@ -678,7 +692,8 @@ class $modify(MySelectPremadeLayer, SelectPremadeLayer) {
     bool init() {
         if (!SelectPremadeLayer::init()) return false; 
         if (!OptionsContainer) return false;
-        auto fields = m_fields.self();
+        s_fields = PremadeFields{};
+        auto fields = &s_fields;
 
         if (OptionsContainer->PresetMap.size() > 0) OptionsContainer->PresetMap.clear();
 
